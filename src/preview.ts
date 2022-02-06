@@ -6,7 +6,7 @@ const proxyFetch = (url: string) => {
     undefined,
   ).then((res) => {
     if (!res.ok) throw new Error('Could not load ' + url)
-    return res.text()
+    return res.text();
   })
 }
 
@@ -23,26 +23,52 @@ const loadPageElements = (uri: string) => {
     // Next, load CSS for styles
     const link = document.querySelectorAll<HTMLLinkElement>('link[rel=stylesheet]');
     console.log(link)
-    console.log(uri)
     const links = [];
     for (let i = 0; i < link.length; ++i) {
-        let href = link[i].href; // Get absolute URL
-        var url = new URL(href);
-        // Replace URL elements with raw.githubusercontent
-        href = uri.replace('/index.html', url.pathname)
-        links.push(proxyFetch(href)); //Then add it to links queue and fetch using CORS proxy
+        let href = link[i].href;
+        links.push(proxyFetch(href));
     }
     Promise.all(links).then(function (res) {
         for (let i = 0; i < res.length; ++i) {
             loadData(res[i], 'style');
         }
     });
+    // Load page JS
+    const script = document.querySelectorAll<HTMLScriptElement>('script[type="text/javascript"]');
+    const scripts = [];
+    for (let i = 0; i < script.length; ++i) {
+        const src = script[i].src; //Get absolute URL
+        if (src.indexOf('//raw.githubusercontent.com') > 0) { //Check if it's from raw.github.com or bitbucket.org
+            scripts.push(proxyFetch(src)); //Then add it to scripts queue and fetch using CORS proxy
+        } else {
+            script[i].removeAttribute('type');
+            scripts.push(script[i].innerHTML); //Add inline script to queue to eval in order
+        }
+    }
+    Promise.all(scripts).then(function (res) {
+        for (let i = 0; i < res.length; ++i) {
+            loadData(res[i], 'script');
+        }
+        document.dispatchEvent(new Event('DOMContentLoaded', {bubbles: true, cancelable: true})); //Dispatch DOMContentLoaded event after loading all scripts
+    });
+
 }
+
+const isHTML = (text: string) => {
+    var a = document.createElement('div');
+    a.innerHTML = text;
+
+    for (var c = a.childNodes, i = c.length; i--; ) {
+      if (c[i].nodeType == 1) return true; 
+    }
+    return false;
+  }
 
 const loadHTML = (data: string, url: string) => {
   // Load HTML into an iFrame
-  if (data) {
-      console.log(data);
+  if (data && isHTML(data)) {
+    console.log(data);
+    data = data.replace(/<head([^>]*)>/i, '<head$1><base href="' + url + '">')
     setTimeout(function () {
       document.open()
       document.write(data)
@@ -73,7 +99,7 @@ const renderPage = (url: string) => {
   url = url
     .replace('//github.com/', '//raw.githubusercontent.com/')
     .replace(/\/blob\//, '/') // Get URL of the raw file
-  const urls = [url + '/master/index.html', url + '/main/index.html']
+  const urls = [url + '/main/index.html', url + '/master/index.html']
   for (let u of urls) {
     proxyFetch(u)
       .then((data) => {
