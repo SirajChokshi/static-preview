@@ -3,7 +3,7 @@
 }
 
 $light: #ffffff;
-$dark: #121212;
+$dark: #2c2c36;
 
 @function spacing($up, $right: $up, $down: $up, $left: $right) {
   @return $up * 0.4rem $right * 0.4rem $down * 0.4rem $left * 0.4rem;
@@ -35,13 +35,13 @@ nav {
   }
 
   button {
+    cursor: pointer;
     border: none;
     padding: spacing(2, 3);
     border-radius: spacing(1);
     color: $light;
     font-size: 1rem;
     background-color: $dark;
-    cursor: pointer;
   }
 
   button {
@@ -49,5 +49,9 @@ nav {
     left: 30px;
     bottom: 30px;
     z-index: 1;
+    box-shadow: 0px 2px 4px rgb(45 35 66 / 40%),
+      /* diffuse shadow behind the button */ 0px 7px 13px -3px rgb(45 35 66 /
+            30%),
+      /* shadow offset to the bottom for depth */ inset 0px -3px 0px #15151c; /* boottom "edge" of the button */
   }
 }
