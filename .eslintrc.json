@@ -13,6 +13,16 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
+  "rules": {
+    "import/extensions": ["error", "never", { "ignorePackages": true }],
+    "no-restricted-syntax": [
+      "error",
+      "ForInStatement",
+      "LabeledStatement",
+      "WithStatement"
+    ],
+    "no-use-before-define": "off"
+  },
   "settings": {
     "import/resolver": {
       "node": {

@@ -1,11 +1,7 @@
-import './style.css'
+import { QueryParams } from './helpers'
+import './main.scss'
+import view from './View'
 import { renderPage } from './preview'
 
-const $app = document.querySelector<HTMLDivElement>('#app')!
-
-$app.innerHTML = `
-  <h1>Hello Vite!</h1>
-  <a href="https://vitejs.dev/guide/features.html" target="_blank">Documentation</a>
-`
-
+view(QueryParams.get())
 renderPage('https://github.com/daviskeene/Portfolio')
