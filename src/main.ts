@@ -1,5 +1,5 @@
 import { QueryParams } from './helpers'
 import './main.scss'
-import View from './View'
+import view from './View'
 
-new View(QueryParams.get())
+view(QueryParams.get())

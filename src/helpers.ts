@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 export class QueryParams {
   static get() {
     const searchParams = new URLSearchParams(window.location.search)
@@ -12,9 +13,10 @@ export class QueryParams {
     if ('URLSearchParams' in window) {
       const searchParams = new URLSearchParams(window.location.search)
       Object.keys(params).forEach((key) => searchParams.set(key, params[key]))
-      const newRelativePathQuery =
-        window.location.pathname + '?' + searchParams.toString()
-      history.pushState(null, '', newRelativePathQuery)
+      const newRelativePathQuery = `${
+        window.location.pathname
+      }?${searchParams.toString()}`
+      window.history.pushState(null, '', newRelativePathQuery)
     }
   }
 }

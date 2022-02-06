@@ -6,45 +6,39 @@ import {
 } from './constants'
 import { QueryParams } from './helpers'
 
-export default class View {
-  $urlInput
-  $urlSubmit
-  $preview
+const $urlInput = document.querySelector<HTMLInputElement>(URL_INPUT_ID)!
+const $urlSubmit = document.querySelector<HTMLButtonElement>(URL_SUBMIT_ID)!
+const $preview = document.querySelector<HTMLDivElement>(PREVIEW_ID)!
 
-  url: string = DEFAULT_URL
+export default function view(params: Record<string, string>) {
+  // init url
+  let url = DEFAULT_URL
 
-  constructor(params: Record<string, string>) {
-    this.$urlInput = document.querySelector<HTMLInputElement>(URL_INPUT_ID)!
-    this.$urlSubmit = document.querySelector<HTMLButtonElement>(URL_SUBMIT_ID)!
-    this.$preview = document.querySelector<HTMLDivElement>(PREVIEW_ID)!
+  // add listeners
+  $urlInput.addEventListener('input', (e) => {
+    url = (<HTMLInputElement>e.target)!.value
+  })
 
-    this.$urlInput.addEventListener(
-      'input',
-      (e) => (this.url = (<HTMLInputElement>e.target)!.value),
-    )
+  $urlSubmit.addEventListener('click', () => updatePreviewURL(url))
 
-    this.$urlSubmit.addEventListener('click', () =>
-      this.updatePreviewURL(this.url),
-    )
+  // process received (or default) url
+  updatePreviewURL(params.url ?? url)
 
-    this.updatePreviewURL(params.url ?? this.url)
-  }
+  function updatePreviewURL(newURL: string) {
+    QueryParams.set({ url: newURL })
+    url = newURL
 
-  private updatePreviewURL(url: string) {
-    QueryParams.set({ url })
-    this.url = url
-
-    if (!url) {
-      this.$preview.innerHTML = '<b>try a repo</b>'
+    if (!newURL) {
+      $preview.innerHTML = '<b>try a repo</b>'
       return
     }
 
-    this.$preview.innerHTML = `
+    $preview.innerHTML = `
       <button id="close-button"">&larr; Back</button>
       <iframe src="${url}">
     `
 
     document.getElementById('close-button')!.onclick = () =>
-      this.updatePreviewURL('')
+      updatePreviewURL('')
   }
 }
