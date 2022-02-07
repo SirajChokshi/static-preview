@@ -4,17 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martel:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <title>Static Preview</title>
   </head>
   <body>
     <nav>
       <h1>Static Preview &mdash; <i>Github Repos as Static Sites</i></h1>
     </nav>
-    <div>
-      <input id="url-input" />
+    <div id="form">
+      <input id="url-input" placeholder="e.g. https://example.com" type="url" />
       <button id="url-submit">Go</button>
     </div>
-    <div id="preview"><noscript>This site requires JavaScript.</noscript></div>
+    <div id="preview">
+      <iframe id="site-frame"></iframe>
+      <noscript>This site requires JavaScript.</noscript>
+    </div>
     <footer>
       Copyright &copy; 2022 &middot; Source on
       <a href="https://github.com/SirajChokshi/static-preview">Github</a>

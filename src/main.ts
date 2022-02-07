@@ -1,7 +1,5 @@
 import { QueryParams } from './helpers'
 import './main.scss'
-import view from './View'
-import { renderPage } from './preview'
+import view from './view'
 
 view(QueryParams.get())
-renderPage('https://github.com/daviskeene/Portfolio')

@@ -3,9 +3,9 @@ import {
   URL_INPUT_ID,
   URL_SUBMIT_ID,
   PREVIEW_ID,
-  IFRAME_ID,
 } from './constants'
 import { formatURL, QueryParams } from './helpers'
+import renderPage from './preview'
 
 const $urlInput = document.querySelector<HTMLInputElement>(URL_INPUT_ID)!
 const $urlSubmit = document.querySelector<HTMLButtonElement>(URL_SUBMIT_ID)!
@@ -20,7 +20,13 @@ export default function view(params: Record<string, string>) {
     url = (<HTMLInputElement>e.target)!.value
   })
 
-  $urlSubmit.addEventListener('click', () => updatePreviewURL(formatURL(url)))
+  const onSubmitURL = () => updatePreviewURL(formatURL(url))
+
+  $urlSubmit.addEventListener('click', onSubmitURL)
+  $urlInput.addEventListener(
+    'keypress',
+    (e) => e.key === 'Enter' && onSubmitURL(),
+  )
 
   // process received (or default) url
   updatePreviewURL(params.url ?? url)
@@ -31,14 +37,16 @@ export default function view(params: Record<string, string>) {
     $urlInput.value = newURL
 
     if (!newURL) {
-      $preview.innerHTML = '<b>try a repo</b>'
+      $preview.innerHTML = ''
       return
     }
 
     $preview.innerHTML = `
       <button id="close-button"">&larr; Back</button>
-      <iframe id="${IFRAME_ID}" src="${url}">
+      <iframe id="site-frame">
     `
+
+    renderPage(newURL)
 
     document.getElementById('close-button')!.onclick = () =>
       updatePreviewURL('')

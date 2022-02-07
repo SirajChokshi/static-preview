@@ -2,8 +2,10 @@
   font-size: 16px;
 }
 
-$light: #ffffff;
-$dark: #2c2c36;
+$light: #fffaec;
+$dark: #302b1e;
+$link: rgb(0, 0, 238);
+$fonts: 'Martel', serif;
 
 @function spacing($up, $right: $up, $down: $up, $left: $right) {
   @return $up * 0.4rem $right * 0.4rem $down * 0.4rem $left * 0.4rem;
@@ -11,16 +13,65 @@ $dark: #2c2c36;
 
 html {
   margin: 0;
+  background: $light;
 }
 
 body {
   margin: 0 auto;
+  padding-top: 15vh;
   width: 90%;
   max-width: 800px;
+  font-family: $fonts;
+  color: $dark;
+}
+
+a,
+a:visited {
+  color: $link;
 }
 
 nav {
   display: flex;
+}
+
+footer {
+  margin-top: 5vh;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  padding: spacing(2, 3);
+  border-radius: spacing(1);
+  font-size: 1rem;
+  color: $light;
+  background-color: $dark;
+}
+
+#form {
+  display: flex;
+
+  & > * {
+    padding: spacing(2);
+  }
+
+  input {
+    flex: 1;
+    border-radius: 0.2rem 0 0 0.2rem;
+    border: 1px solid $dark;
+    font-size: 1rem;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  button {
+    border-radius: 0 0.2rem 0.2rem 0;
+    border: 1px solid $dark;
+    border-left: none;
+    cursor: pointer;
+  }
 }
 
 #preview {
@@ -35,23 +86,9 @@ nav {
   }
 
   button {
-    cursor: pointer;
-    border: none;
-    padding: spacing(2, 3);
-    border-radius: spacing(1);
-    color: $light;
-    font-size: 1rem;
-    background-color: $dark;
-  }
-
-  button {
     position: absolute;
     left: 30px;
     bottom: 30px;
     z-index: 1;
-    box-shadow: 0px 2px 4px rgb(45 35 66 / 40%),
-      /* diffuse shadow behind the button */ 0px 7px 13px -3px rgb(45 35 66 /
-            30%),
-      /* shadow offset to the bottom for depth */ inset 0px -3px 0px #15151c; /* boottom "edge" of the button */
   }
 }
