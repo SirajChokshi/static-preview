@@ -19,6 +19,11 @@ export default function view(params: Record<string, string>) {
   $urlInput.addEventListener('input', (e) => {
     url = (<HTMLInputElement>e.target)!.value
   })
+  // $urlInput.addEventListener('keypress', (e: any) => {
+  //   if (e.key === 'Enter') {
+  //     updatePreviewURL(formatURL(url))
+  //   }
+  // })
 
   $urlSubmit.addEventListener('click', () => updatePreviewURL(formatURL(url)))
 
@@ -31,7 +36,7 @@ export default function view(params: Record<string, string>) {
     $urlInput.value = newURL
 
     if (!newURL) {
-      $preview.innerHTML = '<b>try a repo</b>'
+      $preview.innerHTML = ''
       return
     }
 
