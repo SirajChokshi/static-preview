@@ -7,6 +7,8 @@ import {
 } from './constants'
 import { formatURL, QueryParams } from './helpers'
 
+import renderPage from './preview'
+
 const $urlInput = document.querySelector<HTMLInputElement>(URL_INPUT_ID)!
 const $urlSubmit = document.querySelector<HTMLButtonElement>(URL_SUBMIT_ID)!
 const $preview = document.querySelector<HTMLDivElement>(PREVIEW_ID)!
@@ -37,8 +39,10 @@ export default function view(params: Record<string, string>) {
 
     $preview.innerHTML = `
       <button id="close-button"">&larr; Back</button>
-      <iframe id="${IFRAME_ID}" src="${url}">
+      <iframe id="${IFRAME_ID.substring(1)}"></iframe>
     `
+
+    renderPage(url)
 
     document.getElementById('close-button')!.onclick = () =>
       updatePreviewURL('')
