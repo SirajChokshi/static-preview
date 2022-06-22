@@ -5,13 +5,14 @@ import {
   PREVIEW_ID,
   IFRAME_ID,
 } from './constants'
-import { formatURL, QueryParams } from './helpers'
+import { isValidURL, QueryParams } from './helpers'
 
 import renderPage from './preview'
 
 const $urlInput = document.querySelector<HTMLInputElement>(URL_INPUT_ID)!
 const $urlSubmit = document.querySelector<HTMLButtonElement>(URL_SUBMIT_ID)!
 const $preview = document.querySelector<HTMLDivElement>(PREVIEW_ID)!
+const $help = document.querySelector<HTMLDivElement>('#help')!
 
 export default function view(params: Record<string, string>) {
   // init url
@@ -19,32 +20,81 @@ export default function view(params: Record<string, string>) {
 
   // add listeners
   $urlInput.addEventListener('input', (e) => {
-    url = (<HTMLInputElement>e.target)!.value
+    const { value } = (<HTMLInputElement>e.target)!
+
+    if (!value) {
+      $urlSubmit.disabled = true
+    } else {
+      $urlSubmit.disabled = false
+    }
+
+    url = value
   })
 
-  $urlSubmit.addEventListener('click', () => updatePreviewURL(formatURL(url)))
+  $urlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      updatePreviewURL(url)
+    }
+  })
+
+  $urlSubmit.addEventListener('click', () => updatePreviewURL(url))
 
   // process received (or default) url
   updatePreviewURL(params.url ?? url)
 
   function updatePreviewURL(newURL: string) {
+    if (newURL.length < 3 || !isValidURL(newURL)) {
+      $preview.innerHTML = ''
+
+      if (newURL.length < 1) {
+        return
+      }
+
+      $help.classList.remove('error')
+      // eslint-disable-next-line no-unused-expressions
+      $help.offsetWidth
+      $help.classList.add('error')
+
+      return
+    }
+
     QueryParams.set({ url: newURL })
     url = newURL
     $urlInput.value = newURL
 
     if (!newURL) {
-      $preview.innerHTML = '<b>try a repo</b>'
+      $preview.innerHTML = ''
       return
     }
 
     $preview.innerHTML = `
-      <button id="close-button"">&larr; Back</button>
+      <button id="min-button" class="square"><i class="gg-menu-grid-r"></i></button> 
+      <div id="toolbar">
+        <button id="close-button"><i class="gg-arrow-left"></i> Back</button>
+        <div class="toolbar__right">
+          <button id="max-button" class="square"><i class="gg-maximize-alt"></i></button>
+        </div>
+      </div>
       <iframe id="${IFRAME_ID.substring(1)}"></iframe>
     `
 
     renderPage(url)
 
-    document.getElementById('close-button')!.onclick = () =>
+    document.getElementById('close-button')!.onclick = () => {
       updatePreviewURL('')
+      QueryParams.set({ url: '' })
+      $urlInput.value = ''
+    }
+
+    const $minButton = document.querySelector<HTMLDivElement>('#min-button')!
+    const $maxButton = document.querySelector<HTMLDivElement>('#max-button')!
+
+    $maxButton.addEventListener('click', () => {
+      $preview.classList.remove('is-minimized')
+    })
+
+    $minButton.addEventListener('click', () => {
+      $preview.classList.add('is-minimized')
+    })
   }
 }

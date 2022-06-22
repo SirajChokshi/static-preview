@@ -21,10 +21,6 @@ export class QueryParams {
   }
 }
 
-export function formatURL(maybeURL: string) {
-  // https://stackoverflow.com/a/3543261/9357440
-  if (!/^https?:\/\//i.test(maybeURL)) {
-    return `http://${maybeURL}`
-  }
-  return maybeURL
+export function isValidURL(maybeURL: string) {
+  return /^(ftp|http|https):\/\/[^ "]+$/.test(maybeURL)
 }
