@@ -5,13 +5,14 @@ import {
   PREVIEW_ID,
   IFRAME_ID,
 } from './constants'
-import { formatURL, isValidURL, QueryParams } from './helpers'
+import { isValidURL, QueryParams } from './helpers'
 
 import renderPage from './preview'
 
 const $urlInput = document.querySelector<HTMLInputElement>(URL_INPUT_ID)!
 const $urlSubmit = document.querySelector<HTMLButtonElement>(URL_SUBMIT_ID)!
 const $preview = document.querySelector<HTMLDivElement>(PREVIEW_ID)!
+const $help = document.querySelector<HTMLDivElement>('#help')!
 
 export default function view(params: Record<string, string>) {
   // init url
@@ -19,7 +20,15 @@ export default function view(params: Record<string, string>) {
 
   // add listeners
   $urlInput.addEventListener('input', (e) => {
-    url = (<HTMLInputElement>e.target)!.value
+    const { value } = (<HTMLInputElement>e.target)!
+
+    if (!value) {
+      $urlSubmit.disabled = true
+    } else {
+      $urlSubmit.disabled = false
+    }
+
+    url = value
   })
 
   $urlInput.addEventListener('keydown', (e) => {
@@ -35,13 +44,19 @@ export default function view(params: Record<string, string>) {
 
   function updatePreviewURL(newURL: string) {
     if (newURL.length < 3 || !isValidURL(newURL)) {
-      $preview.innerHTML = '<p class="error">Enter a valid url.</p>'
+      $preview.innerHTML = ''
+
+      if (newURL.length < 1) {
+        return
+      }
+
+      $help.classList.remove('error')
+      // eslint-disable-next-line no-unused-expressions
+      $help.offsetWidth
+      $help.classList.add('error')
 
       return
     }
-
-    // eslint-disable-next-line no-param-reassign
-    newURL = formatURL(newURL)
 
     QueryParams.set({ url: newURL })
     url = newURL
@@ -53,7 +68,13 @@ export default function view(params: Record<string, string>) {
     }
 
     $preview.innerHTML = `
-      <button id="close-button"">&larr; Back</button>
+      <button id="min-button" class="square"><i class="gg-menu-grid-r"></i></button> 
+      <div id="toolbar">
+        <button id="close-button"><i class="gg-arrow-left"></i> Back</button>
+        <div class="toolbar__right">
+          <button id="max-button" class="square"><i class="gg-maximize-alt"></i></button>
+        </div>
+      </div>
       <iframe id="${IFRAME_ID.substring(1)}"></iframe>
     `
 
@@ -64,5 +85,16 @@ export default function view(params: Record<string, string>) {
       QueryParams.set({ url: '' })
       $urlInput.value = ''
     }
+
+    const $minButton = document.querySelector<HTMLDivElement>('#min-button')!
+    const $maxButton = document.querySelector<HTMLDivElement>('#max-button')!
+
+    $maxButton.addEventListener('click', () => {
+      $preview.classList.remove('is-minimized')
+    })
+
+    $minButton.addEventListener('click', () => {
+      $preview.classList.add('is-minimized')
+    })
   }
 }
