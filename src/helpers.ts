@@ -28,3 +28,11 @@ export function formatURL(maybeURL: string) {
   }
   return maybeURL
 }
+
+export function isValidURL(maybeURL: string) {
+  try {
+    return !!new URL(maybeURL)
+  } catch (_) {
+    return false
+  }
+}

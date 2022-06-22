@@ -90,5 +90,11 @@ button {
     left: 30px;
     bottom: 30px;
     z-index: 1;
+    cursor: pointer;
+    font-family: $fonts;
   }
+}
+
+.error {
+  color: rgb(168, 20, 20);
 }

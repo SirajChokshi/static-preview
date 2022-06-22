@@ -66,7 +66,7 @@ const isHTML = (maybeHTML: string) => {
   return [...$div.childNodes].reverse().some(($child) => $child.nodeType === 1)
 }
 
-const loadHTML = (data: string, url: string) => {
+const loadHTML = async (data: string, url: string) => {
   if (data && isHTML(data)) {
     const processedData = data.replace(
       /<head([^>]*)>/i,
@@ -82,7 +82,7 @@ const loadHTML = (data: string, url: string) => {
       iframeDocument.document.write(processedData)
       iframeDocument.document.close()
       loadPageElements()
-    }, 10) // Delay updating document to have it cleared before
+    }, 10)
   }
 }
 
@@ -99,8 +99,8 @@ const renderPage = (url: string) => {
       .replace(/\/blob\//, '/') // Get URL of the raw file
 
     proxyFetch(processedURL)
-      .then((data) => {
-        loadHTML(data, processedURL)
+      .then(async (data) => {
+        await loadHTML(data, processedURL)
       })
       .catch((error) => {
         console.error(error)
@@ -114,18 +114,19 @@ const renderPage = (url: string) => {
     `${processedURL}/main/index.html`,
     `${processedURL}/master/index.html`,
   ]
-  for (const u of urls) {
-    proxyFetch(u)
-      .then((data) => {
-        loadHTML(data, u)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }
-  // If none of these paths leads to an index.html file, that means there is no index.html file in this repo.
-  // Inform the user.
-  return null
+
+  Promise.all(
+    urls.map((u) =>
+      proxyFetch(u)
+        // eslint-disable-next-line no-loop-func
+        .then(async (data) => {
+          await loadHTML(data, u)
+        })
+        .catch((error) => {
+          console.error(error)
+        }),
+    ),
+  )
 }
 
 export default renderPage

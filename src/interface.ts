@@ -5,7 +5,7 @@ import {
   PREVIEW_ID,
   IFRAME_ID,
 } from './constants'
-import { formatURL, QueryParams } from './helpers'
+import { formatURL, isValidURL, QueryParams } from './helpers'
 
 import renderPage from './preview'
 
@@ -22,18 +22,33 @@ export default function view(params: Record<string, string>) {
     url = (<HTMLInputElement>e.target)!.value
   })
 
-  $urlSubmit.addEventListener('click', () => updatePreviewURL(formatURL(url)))
+  $urlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      updatePreviewURL(url)
+    }
+  })
+
+  $urlSubmit.addEventListener('click', () => updatePreviewURL(url))
 
   // process received (or default) url
   updatePreviewURL(params.url ?? url)
 
   function updatePreviewURL(newURL: string) {
+    if (newURL.length < 3 || !isValidURL(newURL)) {
+      $preview.innerHTML = '<p class="error">Enter a valid url.</p>'
+
+      return
+    }
+
+    // eslint-disable-next-line no-param-reassign
+    newURL = formatURL(newURL)
+
     QueryParams.set({ url: newURL })
     url = newURL
     $urlInput.value = newURL
 
     if (!newURL) {
-      $preview.innerHTML = '<b>try a repo</b>'
+      $preview.innerHTML = ''
       return
     }
 
@@ -44,7 +59,10 @@ export default function view(params: Record<string, string>) {
 
     renderPage(url)
 
-    document.getElementById('close-button')!.onclick = () =>
+    document.getElementById('close-button')!.onclick = () => {
       updatePreviewURL('')
+      QueryParams.set({ url: '' })
+      $urlInput.value = ''
+    }
   }
 }
