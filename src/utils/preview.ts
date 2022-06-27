@@ -1,4 +1,5 @@
-import { IFRAME_ID } from './constants'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+const IFRAME_ID = '#site-frame'
 
 const proxyFetch = (url: string) =>
   fetch(`https://api.codetabs.com/v1/proxy/?quest=${url}`, undefined).then(
