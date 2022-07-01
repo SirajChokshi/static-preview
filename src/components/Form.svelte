@@ -12,7 +12,7 @@
   function handleSubmit() {
     isError = false
     if (isValidURL(url)) {
-      goto(`/${encodeURIComponent(url)}`, { replaceState: false })
+      goto(`/${url}`, { replaceState: false })
     } else {
       isError = true
     }
