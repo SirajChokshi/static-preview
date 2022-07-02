@@ -12,7 +12,8 @@
 
   $: {
     if (url) {
-      renderPage(url)
+      const decodedUrl = decodeURIComponent(url)
+      renderPage(decodedUrl)
     }
   }
 </script>

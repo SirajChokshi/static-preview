@@ -111,10 +111,11 @@ const renderPage = (url: string) => {
   processedURL = processedURL
     .replace('//github.com/', '//raw.githubusercontent.com/')
     .replace(/\/blob\//, '/') // Get URL of the raw file
+
   const urls = [
-    `${processedURL}%2Fmain%2findex.html`,
-    `${processedURL}%2fmaster%2findex.html`,
-  ]
+    `${processedURL}/main/index.html`,
+    `${processedURL}/master/index.html`,
+  ].map((uri) => encodeURIComponent(uri))
 
   Promise.all(
     urls.map((u) =>
