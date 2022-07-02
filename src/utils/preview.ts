@@ -115,7 +115,7 @@ const renderPage = (url: string) => {
   const urls = [
     `${processedURL}/main/index.html`,
     `${processedURL}/master/index.html`,
-  ].map((uri) => encodeURIComponent(uri))
+  ]
 
   Promise.all(
     urls.map((u) =>
