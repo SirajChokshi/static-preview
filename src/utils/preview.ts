@@ -111,6 +111,7 @@ const renderPage = (url: string) => {
   processedURL = processedURL
     .replace('//github.com/', '//raw.githubusercontent.com/')
     .replace(/\/blob\//, '/') // Get URL of the raw file
+
   const urls = [
     `${processedURL}/main/index.html`,
     `${processedURL}/master/index.html`,
