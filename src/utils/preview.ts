@@ -1,3 +1,5 @@
+import { processedCSS } from './css'
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 const IFRAME_ID = '#site-frame'
 
@@ -32,10 +34,19 @@ const loadPageElements = () => {
     'link[rel=stylesheet]',
   )
 
-  const links = [...$link].map(({ href }: { href: string }) => proxyFetch(href))
+  const links = [...$link].map(async ({ href }: { href: string }) => {
+    const payload = await proxyFetch(href)
+    return {
+      url: href,
+      payload,
+    }
+  })
 
   Promise.all(links).then((res) => {
-    res.forEach((r) => loadData(r, 'style'))
+    res.forEach(({ payload, url: cssUrl }) => {
+      const processedCSS = processedCSS(payload, cssUrl)
+      loadData(processedCSS, 'style')
+    })
   })
   // Load page JS
   const $script = iframeDocument.document.querySelectorAll<HTMLScriptElement>(
