@@ -33,6 +33,6 @@ function replaceRelativePaths(css: string, url: string) {
   return processedCSS
 }
 
-export function processedCSS(css: string, url: string) {
+export function processCSS(css: string, url: string) {
   return replaceRelativePaths(css, url)
 }

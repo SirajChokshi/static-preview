@@ -1,4 +1,4 @@
-import { processedCSS } from './css'
+import { processCSS } from './css'
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 const IFRAME_ID = '#site-frame'
@@ -44,7 +44,7 @@ const loadPageElements = () => {
 
   Promise.all(links).then((res) => {
     res.forEach(({ payload, url: cssUrl }) => {
-      const processedCSS = processedCSS(payload, cssUrl)
+      const processedCSS = processCSS(payload, cssUrl)
       loadData(processedCSS, 'style')
     })
   })
