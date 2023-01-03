@@ -9,14 +9,12 @@
 
   export let url: string | undefined
 
-  let minimized = true
   let loading = true
   let preview: Preview | undefined = undefined
 
   $: {
     if (url) {
       const decodedUrl = decodeURIComponent(url)
-      // renderPage(decodedUrl)
 
       if (typeof window !== 'undefined') {
         if (!preview) {
@@ -31,19 +29,15 @@
   }
 </script>
 
-{#if !minimized}
-  <Button on:click={() => (minimized = true)}><FullscreenExit /></Button>
-{/if}
-<header class:max={!minimized}>
+<header>
   <Button
     on:click={() => {
       goto('/')
-    }}>Back</Button
+    }}>Leave Preview</Button
   >
-  <Button on:click={() => (minimized = false)}><Fullscreen /></Button>
 </header>
 
-<iframe class:max={!minimized} title="Site Preview" id="site-frame" />
+<iframe title="Site Preview" id="site-frame" />
 
 {#if loading}
   <div class="splash">
@@ -65,7 +59,8 @@
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 3.5rem);
+    transform: translateY(3.5rem);
 
     // reset to default page background
     background: white;

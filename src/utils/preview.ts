@@ -86,19 +86,16 @@ export class Preview {
     this.iframeDocument.document.write(processedData)
     this.iframeDocument.document.close()
 
-    await this.loadPageElements()
     this.initFrameEvents()
-
-    await sleep(10)
+    await this.loadPageElements()
   }
 
   private async initFrameEvents() {
     this.iframe.addEventListener('load', () => {
       // Add event listeners to iframe
       this.iframeDocument.document.addEventListener('click', (e) => {
-        const $anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>(
-          'a',
-        )
+        const $el = e.target as HTMLElement
+        const $anchor = $el.closest<HTMLAnchorElement>('a')
 
         if ($anchor) {
           e.preventDefault()
