@@ -6,6 +6,7 @@ function replaceRelativePaths(css: string, url: string) {
       relativePath = relativePath.substring(1, relativePath.length - 1)
     }
 
+    // get path segments
     const resourcePath = relativePath.split('/')
     const stylesheetPath = url.split('/')
 

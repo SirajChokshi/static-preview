@@ -1,5 +1,5 @@
 <script lang="ts">
-  import renderPage from '../utils/preview'
+  import { Preview } from '../utils/preview'
   import Button from './Button.svelte'
   import Fullscreen from 'svelte-bootstrap-icons/lib/Fullscreen.svelte'
   import FullscreenExit from 'svelte-bootstrap-icons/lib/FullscreenExit.svelte'
@@ -9,11 +9,16 @@
   export let url: string | undefined
 
   let minimized = true
+  let preview: Preview | undefined = undefined
 
   $: {
     if (url) {
       const decodedUrl = decodeURIComponent(url)
-      renderPage(decodedUrl)
+      // renderPage(decodedUrl)
+
+      if (!preview && typeof window !== 'undefined') {
+        preview = new Preview('#site-frame', decodedUrl)
+      }
     }
   }
 </script>
