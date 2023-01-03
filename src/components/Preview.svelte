@@ -5,10 +5,12 @@
   import FullscreenExit from 'svelte-bootstrap-icons/lib/FullscreenExit.svelte'
 
   import { goto } from '$app/navigation'
+  import Spinner from './icons/Spinner.svelte'
 
   export let url: string | undefined
 
   let minimized = true
+  let loading = true
   let preview: Preview | undefined = undefined
 
   $: {
@@ -16,8 +18,14 @@
       const decodedUrl = decodeURIComponent(url)
       // renderPage(decodedUrl)
 
-      if (!preview && typeof window !== 'undefined') {
-        preview = new Preview('#site-frame', decodedUrl)
+      if (typeof window !== 'undefined') {
+        if (!preview) {
+          preview = new Preview('#site-frame')
+        }
+
+        preview.render(decodedUrl).then(() => {
+          loading = false
+        })
       }
     }
   }
@@ -34,7 +42,14 @@
   >
   <Button on:click={() => (minimized = false)}><Fullscreen /></Button>
 </header>
+
 <iframe class:max={!minimized} title="Site Preview" id="site-frame" />
+
+{#if loading}
+  <div class="splash">
+    <Spinner />
+  </div>
+{/if}
 
 <style lang="scss">
   :global(main > button) {
@@ -47,43 +62,62 @@
   iframe {
     position: fixed;
     border: none;
-    left: 50%;
-    top: 50%;
-    width: calc(100% - 8rem);
-    height: calc(100% - 7rem);
-    transform: translate(-50%, calc(-50% + 1.5rem));
-    border-radius: spacing(0.5);
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
 
-    transition: all 0.15s cubic-bezier(0.785, 0.135, 0.15, 0.86);
+    // reset to default page background
+    background: white;
+  }
 
-    &.max {
-      border-radius: 0;
-      width: 100%;
-      height: 100%;
-      transform: translate(-50%, -50%);
+  .splash {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.25rem;
+    font-weight: bold;
+    color: var(--dark-2);
+    backdrop-filter: blur(5px);
+    z-index: 1;
+
+    :global(svg) {
+      animation: spin 2s cubic-bezier(0.075, 0.82, 0.165, 1) infinite;
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     }
   }
 
   header {
     position: fixed;
-    top: 1rem;
-    left: 4rem;
+    top: 0;
+    left: 0;
     display: flex;
     padding: 1rem;
+    height: 3.5rem;
     box-sizing: border-box;
-    width: calc(100% - 8rem);
+    width: 100%;
     justify-content: space-between;
     align-items: center;
+    z-index: 2;
 
     padding: spacing(0.5);
     background: white;
-    border-radius: spacing(0.5);
 
-    transform: translateY(0);
-    transition: transform 0.15s cubic-bezier(0.785, 0.135, 0.15, 0.86);
+    border-bottom: 1px solid var(--light-2);
 
-    &.max {
-      transform: translateY(-8rem);
-    }
+    box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
   }
 </style>

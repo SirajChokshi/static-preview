@@ -11,11 +11,8 @@ export class Preview {
   history = [] as string[]
   resources: Record<string, string> = {}
 
-  constructor(iframeId: string, initialUrl: string) {
+  constructor(iframeId: string) {
     this.iframeId = iframeId
-
-    // Load initial page
-    this.render(initialUrl)
   }
 
   get iframe() {
@@ -32,7 +29,7 @@ export class Preview {
     return (this.iframe?.contentWindow ?? this.iframe.contentDocument) as Window
   }
 
-  render(url: string) {
+  async render(url: string) {
     this.history.push(url)
 
     // Check for source uri string, which follows several different cases.
@@ -63,7 +60,7 @@ export class Preview {
       `${processedURL}/master/index.html`,
     ]
 
-    Promise.all(
+    await Promise.all(
       urls.map((u) =>
         this.load(u)
           // eslint-disable-next-line no-loop-func
@@ -89,7 +86,7 @@ export class Preview {
     this.iframeDocument.document.write(processedData)
     this.iframeDocument.document.close()
 
-    this.loadPageElements()
+    await this.loadPageElements()
     this.initFrameEvents()
 
     await sleep(10)
@@ -113,7 +110,7 @@ export class Preview {
     })
   }
 
-  private loadPageElements() {
+  private async loadPageElements() {
     // Load CSS
     const $link =
       this.iframeDocument.document.querySelectorAll<HTMLLinkElement>(
@@ -127,7 +124,7 @@ export class Preview {
       }
     })
 
-    Promise.all(links).then((res) => {
+    await Promise.all(links).then((res) => {
       res.forEach(({ payload, url: cssUrl }) => {
         const processedCSS = processCSS(payload, cssUrl)
         this.appendToHead(processedCSS, 'style')
@@ -150,7 +147,7 @@ export class Preview {
       return s.innerHTML // Add inline script to queue to eval in order
     })
 
-    Promise.all(scripts).then((res) => {
+    await Promise.all(scripts).then((res) => {
       res.forEach((r) => this.appendToHead(r, 'script'))
 
       this.iframeDocument.document.dispatchEvent(
