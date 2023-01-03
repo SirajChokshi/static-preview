@@ -14,7 +14,8 @@ A hosted version application is available at https://static-preview.vercel.app.
 
 Static Preview is not a full-fledged web server. It is a tool to preview static websites. As such, it has the following limitations:
 
-- It does not support dynamic content (e.g. PHP, Node.js, etc.) or a build process (e.g. Gulp, Webpack, etc.)
+- Does not support dynamic content (e.g. PHP, Node.js, etc.) or a build process (e.g. Gulp, Webpack, etc.)
+- [CORB](https://chromium.googlesource.com/chromium/src/+/master/services/network/cross_origin_read_blocking_explainer.md) blocks some requests (e.g. `fetch` requests to `localhost`)
 
 ## Roadmap
 
