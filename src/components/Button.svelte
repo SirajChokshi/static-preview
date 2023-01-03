@@ -24,7 +24,7 @@
     display: flex;
     align-items: center;
     padding: spacing(1.25, 2);
-    border-radius: spacing(0.5);
+    border-radius: spacing(1);
     box-sizing: border-box;
     font-size: 1rem;
     color: var(--light);

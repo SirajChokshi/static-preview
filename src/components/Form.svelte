@@ -53,7 +53,7 @@
       flex: 1;
       justify-content: center;
       align-items: stretch;
-      border-radius: spacing(0.5);
+      border-radius: spacing(1);
       background: white;
       border: 1px solid var(--light-2);
       overflow: hidden;

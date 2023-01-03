@@ -33,9 +33,8 @@ const loadPageElements = () => {
   const $link = iframeDocument.document.querySelectorAll<HTMLLinkElement>(
     'link[rel=stylesheet]',
   )
-
   const links = [...$link].map(async ({ href }: { href: string }) => {
-    const payload = await proxyFetch(href)
+    const payload = await proxyFetch(`${href}`)
     return {
       url: href,
       payload,
@@ -79,28 +78,59 @@ const isHTML = (maybeHTML: string) => {
 }
 
 const loadHTML = async (data: string, url: string) => {
-  if (data && isHTML(data)) {
-    const processedData = data.replace(
-      /<head([^>]*)>/i,
-      `<head$1><base href="${url}">`,
-    )
-
-    setTimeout(() => {
-      const $iframe = document.querySelector<HTMLIFrameElement>(IFRAME_ID)!
-      const iframeDocument = ($iframe?.contentWindow ??
-        $iframe.contentDocument) as Window
-
-      iframeDocument.document.open()
-      iframeDocument.document.write(processedData)
-      iframeDocument.document.close()
-      loadPageElements()
-    }, 10)
+  if (!isHTML(data)) {
+    console.log(url, data)
+    throw Error('Not HTML')
   }
+
+  const processedData = data
+    // Add base tag to iframe
+    .replace(/<head([^>]*)>/i, `<head$1><base href="${url}">`)
+    // Replace absolute paths with relative paths
+    .replace(/((src|href|content)=")\/(.*?")/gm, '$1$3')
+
+  setTimeout(() => {
+    const $iframe = document.querySelector<HTMLIFrameElement>(IFRAME_ID)!
+    const iframeDocument = ($iframe?.contentWindow ??
+      $iframe.contentDocument) as Window
+
+    iframeDocument.document.open()
+    iframeDocument.document.write(processedData)
+    iframeDocument.document.close()
+
+    loadPageElements()
+
+    initFrameEvents()
+  }, 10)
+}
+
+function isAnchorElement(
+  element: Element | null,
+): element is HTMLAnchorElement {
+  return element?.tagName === 'A'
+}
+
+function initFrameEvents() {
+  const $iframe = document.querySelector<HTMLIFrameElement>(IFRAME_ID)!
+
+  $iframe.addEventListener('load', () => {
+    const iframeDocument = ($iframe?.contentWindow ??
+      $iframe.contentDocument) as Window
+
+    // Add event listeners to iframe
+    iframeDocument.document.addEventListener('click', (e) => {
+      const $target = e.target as HTMLElement
+
+      if (isAnchorElement($target)) {
+        e.preventDefault()
+        renderPage($target.href!)
+      }
+    })
+  })
 }
 
 const renderPage = (url: string) => {
   // Check for source uri string, which follows several different cases.
-
   let processedURL = url
 
   if (url.includes('.html')) {
