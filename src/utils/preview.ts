@@ -1,7 +1,8 @@
-import { sleep } from './async'
+import { goto } from '$app/navigation'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
 import { isHTML, processHTML } from './lang/html'
+import logger from './logger'
 
 export class Preview {
   // Parent
@@ -10,6 +11,9 @@ export class Preview {
   // Session
   history = [] as string[]
   resources: Record<string, string> = {}
+
+  // Listeners
+  onHistoryChange?: (route: string, history: string[]) => void
 
   constructor(iframeId: string) {
     this.iframeId = iframeId
@@ -30,8 +34,6 @@ export class Preview {
   }
 
   async render(url: string) {
-    this.history.push(url)
-
     // Check for source uri string, which follows several different cases.
     let processedURL = url
 
@@ -56,9 +58,15 @@ export class Preview {
       .replace(/\/blob\//, '/') // Get URL of the raw file
 
     const urls = [
+      // TODO - first check if the user is attempting to load without a file path
       `${processedURL}/main/index.html`,
       `${processedURL}/master/index.html`,
     ]
+
+    const errorTable = {
+      main: false,
+      master: false,
+    }
 
     await Promise.all(
       urls.map((u) =>
@@ -67,16 +75,24 @@ export class Preview {
           .then(async (data) => {
             await this.loadHTML(data, u)
           })
-          .catch((error) => {
-            console.error(error)
+          .catch(() => {
+            if (u.includes('main')) errorTable.main = true
+            if (u.includes('master')) errorTable.master = true
           }),
       ),
     )
+
+    if (errorTable.main && errorTable.master) {
+      // TODO: only throw error if the user is attempting to load without a file path
+      // throw Error('Could not find index.html on <main> or <master> branch')
+    }
   }
 
   private async loadHTML(data: string, url: string) {
     if (!isHTML(data)) {
-      console.log(url, data)
+      logger.warn(`🚨 Error Loading HTML\nURL: ${url}\nBlob: ${data}`)
+
+      // TODO - use a catchable error, maybe pass up to an error settler in `render`
       throw Error('Not HTML')
     }
 
@@ -100,8 +116,10 @@ export class Preview {
         if ($anchor) {
           e.preventDefault()
 
-          // TODO - check if anchor is external
-          this.render($anchor.href)
+          // TODO: Check if it's a relative link
+
+          // use Svelte navigation to trigger a re-render from the top of the UI
+          goto(`/${encodeURIComponent($anchor.href)}`)
         }
       })
     })
