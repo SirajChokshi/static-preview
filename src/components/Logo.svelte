@@ -12,6 +12,6 @@
       width: 3.5rem;
     }
 
-    filter: drop-shadow(0 4px 0.375rem var(--light-2));
+    filter: drop-shadow(0 4px 0.375rem var(--light-3));
   }
 </style>

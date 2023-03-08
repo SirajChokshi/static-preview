@@ -1,21 +1,21 @@
-import { sleep } from './async'
+import { goto } from '$app/navigation'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
-import { isHTML, processHTML } from './lang/html'
+import { isHTML, processHTML, type HTMLPageData } from './lang/html'
+import logger from './logger'
 
 export class Preview {
   // Parent
   iframeId: string
 
   // Session
-  history = [] as string[]
   resources: Record<string, string> = {}
 
-  constructor(iframeId: string, initialUrl: string) {
-    this.iframeId = iframeId
+  // TODO - might be worth memoizing against the URL for the session
+  pageData: Partial<HTMLPageData> = {}
 
-    // Load initial page
-    this.render(initialUrl)
+  constructor(iframeId: string) {
+    this.iframeId = iframeId
   }
 
   get iframe() {
@@ -32,13 +32,12 @@ export class Preview {
     return (this.iframe?.contentWindow ?? this.iframe.contentDocument) as Window
   }
 
-  render(url: string) {
-    this.history.push(url)
-
+  async render(url: string) {
     // Check for source uri string, which follows several different cases.
     let processedURL = url
 
     if (url.includes('.html')) {
+      // TODO - move URL utils to a separate file
       // The user has provided us with an index.html file.
       // Simply return this same URL, as it is our source.
       processedURL = processedURL
@@ -59,61 +58,76 @@ export class Preview {
       .replace(/\/blob\//, '/') // Get URL of the raw file
 
     const urls = [
+      // TODO - first check if the user is attempting to load without a file path
       `${processedURL}/main/index.html`,
       `${processedURL}/master/index.html`,
     ]
 
-    Promise.all(
+    const errorTable = {
+      main: false,
+      master: false,
+    }
+
+    await Promise.all(
       urls.map((u) =>
         this.load(u)
           // eslint-disable-next-line no-loop-func
           .then(async (data) => {
             await this.loadHTML(data, u)
           })
-          .catch((error) => {
-            console.error(error)
+          .catch(() => {
+            if (u.includes('main')) errorTable.main = true
+            if (u.includes('master')) errorTable.master = true
           }),
       ),
     )
+
+    if (errorTable.main && errorTable.master) {
+      // TODO: only throw error if the user is attempting to load without a file path
+      // throw Error('Could not find index.html on <main> or <master> branch')
+    }
   }
 
   private async loadHTML(data: string, url: string) {
     if (!isHTML(data)) {
-      console.log(url, data)
+      logger.warn(`🚨 Error Loading HTML\nURL: ${url}\nBlob: ${data}`)
+
+      // TODO - use a catchable error, maybe pass up to an error settler in `render`
       throw Error('Not HTML')
     }
 
-    const processedData = processHTML(data, url)
+    const { processedHTML, title } = processHTML(data, url)
+
+    this.pageData.title = title ?? url
 
     this.iframeDocument.document.open()
-    this.iframeDocument.document.write(processedData)
+    this.iframeDocument.document.write(processedHTML)
     this.iframeDocument.document.close()
 
-    this.loadPageElements()
     this.initFrameEvents()
-
-    await sleep(10)
+    await this.loadPageElements()
   }
 
   private async initFrameEvents() {
     this.iframe.addEventListener('load', () => {
       // Add event listeners to iframe
       this.iframeDocument.document.addEventListener('click', (e) => {
-        const $anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>(
-          'a',
-        )
+        const $el = e.target as HTMLElement
+        const $anchor = $el.closest<HTMLAnchorElement>('a')
 
         if ($anchor) {
           e.preventDefault()
 
-          // TODO - check if anchor is external
-          this.render($anchor.href)
+          // TODO: Check if it's a relative link
+
+          // use Svelte navigation to trigger a re-render from the top of the UI
+          goto(`/${encodeURIComponent($anchor.href)}`)
         }
       })
     })
   }
 
-  private loadPageElements() {
+  private async loadPageElements() {
     // Load CSS
     const $link =
       this.iframeDocument.document.querySelectorAll<HTMLLinkElement>(
@@ -127,7 +141,7 @@ export class Preview {
       }
     })
 
-    Promise.all(links).then((res) => {
+    await Promise.all(links).then((res) => {
       res.forEach(({ payload, url: cssUrl }) => {
         const processedCSS = processCSS(payload, cssUrl)
         this.appendToHead(processedCSS, 'style')
@@ -150,7 +164,7 @@ export class Preview {
       return s.innerHTML // Add inline script to queue to eval in order
     })
 
-    Promise.all(scripts).then((res) => {
+    await Promise.all(scripts).then((res) => {
       res.forEach((r) => this.appendToHead(r, 'script'))
 
       this.iframeDocument.document.dispatchEvent(
