@@ -12,6 +12,8 @@
   let loading = true
   let preview: Preview | undefined = undefined
 
+  let title = ''
+
   $: {
     if (url) {
       const decodedUrl = decodeURIComponent(url)
@@ -23,6 +25,11 @@
 
         preview.render(decodedUrl).then(() => {
           loading = false
+
+          if (preview?.pageData.title) {
+            // update with page title or URL
+            title = preview.pageData.title
+          }
         })
       }
     }
@@ -31,9 +38,20 @@
 
 <header>
   <Button
+    variant="glass"
+    rounded
+    size="md"
     on:click={() => {
       goto('/')
-    }}>Leave Preview</Button
+    }}>&larr; Back</Button
+  >
+  <h1>{title}</h1>
+  <Button
+    disabled
+    size="md"
+    on:click={() => {
+      goto('/')
+    }}>&larr; Back</Button
   >
 </header>
 
@@ -54,13 +72,13 @@
   }
 
   iframe {
+    padding-top: 3.5rem;
     position: fixed;
     border: none;
     left: 0;
     top: 0;
     width: 100%;
     height: calc(100% - 3.5rem);
-    transform: translateY(3.5rem);
 
     // reset to default page background
     background: white;
@@ -97,22 +115,38 @@
 
   header {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 1rem;
+    left: 1rem;
     display: flex;
-    padding: 1rem;
-    height: 3.5rem;
+    border-radius: 9999px;
     box-sizing: border-box;
-    width: 100%;
+    width: calc(100% - 2rem);
     justify-content: space-between;
     align-items: center;
     z-index: 2;
 
-    padding: spacing(0.5);
-    background: white;
+    padding: spacing(0.75);
+    background: var(--light);
+    border: 1px solid var(--light-2);
 
-    border-bottom: 1px solid var(--light-2);
+    box-shadow: 0 4px 7.6px rgba(0, 0, 0, 0.025);
 
-    box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+    h1 {
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--dark-2);
+
+      max-width: 500px;
+      flex: 1;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    > :global(button:last-child) {
+      visibility: hidden;
+    }
   }
 </style>

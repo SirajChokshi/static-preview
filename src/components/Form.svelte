@@ -24,6 +24,7 @@
     }
   }
 
+  $: url, (isError = false)
   $: urlResource = getResourceType(url)
 </script>
 
@@ -53,9 +54,9 @@
       flex: 1;
       justify-content: center;
       align-items: stretch;
-      border-radius: spacing(1);
+      border-radius: spacing(0.925);
       background: white;
-      border: 1px solid var(--light-2);
+      border: 1px solid var(--light-3);
       overflow: hidden;
 
       margin-right: 0.5rem;

@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
-import { isHTML, processHTML } from './lang/html'
+import { isHTML, processHTML, type HTMLPageData } from './lang/html'
 import logger from './logger'
 
 export class Preview {
@@ -9,11 +9,10 @@ export class Preview {
   iframeId: string
 
   // Session
-  history = [] as string[]
   resources: Record<string, string> = {}
 
-  // Listeners
-  onHistoryChange?: (route: string, history: string[]) => void
+  // TODO - might be worth memoizing against the URL for the session
+  pageData: Partial<HTMLPageData> = {}
 
   constructor(iframeId: string) {
     this.iframeId = iframeId
@@ -38,6 +37,7 @@ export class Preview {
     let processedURL = url
 
     if (url.includes('.html')) {
+      // TODO - move URL utils to a separate file
       // The user has provided us with an index.html file.
       // Simply return this same URL, as it is our source.
       processedURL = processedURL
@@ -96,10 +96,12 @@ export class Preview {
       throw Error('Not HTML')
     }
 
-    const processedData = processHTML(data, url)
+    const { processedHTML, title } = processHTML(data, url)
+
+    this.pageData.title = title ?? url
 
     this.iframeDocument.document.open()
-    this.iframeDocument.document.write(processedData)
+    this.iframeDocument.document.write(processedHTML)
     this.iframeDocument.document.close()
 
     this.initFrameEvents()
