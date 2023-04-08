@@ -1,8 +1,6 @@
 <script lang="ts">
   import { Preview } from '../utils/preview'
   import Button from './Button.svelte'
-  import Fullscreen from 'svelte-bootstrap-icons/lib/Fullscreen.svelte'
-  import FullscreenExit from 'svelte-bootstrap-icons/lib/FullscreenExit.svelte'
 
   import { goto } from '$app/navigation'
   import Spinner from './icons/Spinner.svelte'
