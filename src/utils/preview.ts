@@ -1,8 +1,10 @@
 import { goto } from '$app/navigation'
+import { resourceType } from '../constants/resources'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
 import { isHTML, processHTML, type HTMLPageData } from './lang/html'
 import logger from './logger'
+import { getResourceType, getPossibleUrls, processUrl } from './url'
 
 export class Preview {
   // Parent
@@ -33,35 +35,25 @@ export class Preview {
   }
 
   async render(url: string) {
-    // Check for source uri string, which follows several different cases.
-    let processedURL = url
+    const urlType = getResourceType(url)
 
-    if (url.includes('.html')) {
-      // TODO - move URL utils to a separate file
-      // The user has provided us with an index.html file.
-      // Simply return this same URL, as it is our source.
-      processedURL = processedURL
-        .replace('//github.com/', '//raw.githubusercontent.com/')
-        .replace(/\/blob\//, '/') // Get URL of the raw file
+    if (urlType === resourceType.HTML) {
+      const htmlURL = processUrl(url)
 
-      this.load(processedURL)
+      this.load(htmlURL)
         .then(async (data) => {
-          await this.loadHTML(data, processedURL)
+          await this.loadHTML(data, htmlURL)
         })
         .catch((error) => {
           console.error(error)
         })
-    }
-    // Otherwise, we need to check if index.html exists. Try /main/ and /master/.
-    processedURL = processedURL
-      .replace('//github.com/', '//raw.githubusercontent.com/')
-      .replace(/\/blob\//, '/') // Get URL of the raw file
 
-    const urls = [
-      // TODO - first check if the user is attempting to load without a file path
-      `${processedURL}/main/index.html`,
-      `${processedURL}/master/index.html`,
-    ]
+      // if we are loading a file at this point we can stop here
+      return
+    }
+
+    // otherwise we have to figure out where the file is in the repo
+    const urls: string[] = getPossibleUrls(url)
 
     const errorTable = {
       main: false,
