@@ -37,11 +37,12 @@ function processGithubURL(urlStr: string): string {
 function processGitlabURL(urlStr: string): string {
   const url = new URL(urlStr)
 
-  if (url.pathname.includes('/blob/')) {
-    // the first instance of /blob/ is the branch name
-    // unless the project or user's name includes /blob/
-    // TODO: handle arbitrary `blob` in project name
-    url.pathname = url.pathname.replace('/blob/', '/raw/')
+  if (url.pathname.includes('/-/blob/')) {
+    url.pathname = url.pathname.replace('/-/blob/', '/-/raw/')
+  }
+
+  if (url.pathname.includes('/-/tree/')) {
+    url.pathname = url.pathname.replace('/-/tree/', '/-/raw/')
   }
 
   return url.href
@@ -76,7 +77,8 @@ export function getPossibleUrls(url: string): string[] {
 
   return [
     // TODO - first check if the user is attempting to load without a file path
-    `${baseUrl}/main/index.html`,
-    `${baseUrl}/master/index.html`,
+    `${baseUrl}/index.html`,
+    `${baseUrl}main/index.html`,
+    `${baseUrl}master/index.html`,
   ]
 }

@@ -191,6 +191,7 @@ export class Preview {
 
     // otherwise, fetch it and store it
     const data = await proxyFetch(url)
+
     this.resources[url] = data
 
     return data
