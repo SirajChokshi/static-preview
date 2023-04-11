@@ -1,8 +1,10 @@
 import { goto } from '$app/navigation'
+import { PreviewError, errorType } from './errors'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
 import { isHTML, processHTML, type HTMLPageData } from './lang/html'
 import logger from './logger'
+import { processUrl } from './url'
 
 export class Preview {
   // Parent
@@ -33,58 +35,47 @@ export class Preview {
   }
 
   async render(url: string) {
-    // Check for source uri string, which follows several different cases.
-    let processedURL = url
+    const urls = processUrl(url)
 
-    if (url.includes('.html')) {
-      // TODO - move URL utils to a separate file
-      // The user has provided us with an index.html file.
-      // Simply return this same URL, as it is our source.
-      processedURL = processedURL
-        .replace('//github.com/', '//raw.githubusercontent.com/')
-        .replace(/\/blob\//, '/') // Get URL of the raw file
+    if (urls.length === 1) {
+      // if the URL is an HTML file, we can just load it
+      const htmlURL = urls[0]
 
-      this.load(processedURL)
+      this.load(htmlURL)
         .then(async (data) => {
-          await this.loadHTML(data, processedURL)
+          await this.loadHTML(data, htmlURL)
         })
-        .catch((error) => {
-          console.error(error)
+        .catch(() => {
+          throw new PreviewError(
+            `Could not find any valid HTML files. Tried:\n${urls.join(
+              '\n - ',
+            )}`,
+            errorType.NOT_FOUND,
+          )
         })
-    }
-    // Otherwise, we need to check if index.html exists. Try /main/ and /master/.
-    processedURL = processedURL
-      .replace('//github.com/', '//raw.githubusercontent.com/')
-      .replace(/\/blob\//, '/') // Get URL of the raw file
+    } else {
+      // otherwise we have to attempt to load 3 possible URLs
+      const errorTable = new Array(urls.length).fill(false)
 
-    const urls = [
-      // TODO - first check if the user is attempting to load without a file path
-      `${processedURL}/main/index.html`,
-      `${processedURL}/master/index.html`,
-    ]
+      await Promise.all(
+        urls.map((u, idx) =>
+          this.load(u)
+            // eslint-disable-next-line no-loop-func
+            .then(async (data) => {
+              await this.loadHTML(data, u)
+            })
+            .catch(() => {
+              errorTable[idx] = true
+            }),
+        ),
+      )
 
-    const errorTable = {
-      main: false,
-      master: false,
-    }
-
-    await Promise.all(
-      urls.map((u) =>
-        this.load(u)
-          // eslint-disable-next-line no-loop-func
-          .then(async (data) => {
-            await this.loadHTML(data, u)
-          })
-          .catch(() => {
-            if (u.includes('main')) errorTable.main = true
-            if (u.includes('master')) errorTable.master = true
-          }),
-      ),
-    )
-
-    if (errorTable.main && errorTable.master) {
-      // TODO: only throw error if the user is attempting to load without a file path
-      // throw Error('Could not find index.html on <main> or <master> branch')
+      if (errorTable.every((e) => e)) {
+        throw new PreviewError(
+          `Could not find any valid HTML files. Tried:\n${urls.join('\n - ')}`,
+          errorType.NOT_FOUND,
+        )
+      }
     }
   }
 
@@ -199,6 +190,7 @@ export class Preview {
 
     // otherwise, fetch it and store it
     const data = await proxyFetch(url)
+
     this.resources[url] = data
 
     return data
