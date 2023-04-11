@@ -27,6 +27,31 @@ jobs:
       - name: Run linter
         working-directory: .
         run: npm run lint
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.7
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-cache
+
+      - name: Install dependencies
+        working-directory: .
+        run: npm i
+
+      - name: Build application
+        working-directory: .
+        run: npm run test
 
   build:
     needs: lint
