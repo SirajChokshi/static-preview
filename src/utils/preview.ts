@@ -1,4 +1,5 @@
 import { goto } from '$app/navigation'
+import { PreviewError, errorType } from './errors'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
 import { isHTML, processHTML, type HTMLPageData } from './lang/html'
@@ -44,8 +45,13 @@ export class Preview {
         .then(async (data) => {
           await this.loadHTML(data, htmlURL)
         })
-        .catch((error) => {
-          console.error(error)
+        .catch(() => {
+          throw new PreviewError(
+            `Could not find any valid HTML files. Tried:\n${urls.join(
+              '\n - ',
+            )}`,
+            errorType.NOT_FOUND,
+          )
         })
     } else {
       // otherwise we have to attempt to load 3 possible URLs
@@ -65,8 +71,10 @@ export class Preview {
       )
 
       if (errorTable.every((e) => e)) {
-        // TODO: only throw error if the user is attempting to load without a file path
-        // throw Error('Could not find index.html on <main> or <master> branch')
+        throw new PreviewError(
+          `Could not find any valid HTML files. Tried:\n${urls.join('\n - ')}`,
+          errorType.NOT_FOUND,
+        )
       }
     }
   }
