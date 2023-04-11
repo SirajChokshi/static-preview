@@ -3,17 +3,11 @@ import GitLab from '../components/icons/GitLab.svelte'
 import HTML from '../components/icons/HTML.svelte'
 import Github from 'svelte-bootstrap-icons/lib/Github.svelte'
 import type { SvelteComponent } from 'svelte'
+import { resourceType } from '../types/resources'
 
 export interface Resource {
   name: string
   icon: typeof SvelteComponent
-}
-
-export enum resourceType {
-  GITHUB = 'GITHUB',
-  GITLAB = 'GITLAB',
-  BITBUCKET = 'BITBUCKET',
-  HTML = 'HTML',
 }
 
 export const RESOURCES: Record<resourceType, Resource> = {

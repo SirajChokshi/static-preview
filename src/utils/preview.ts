@@ -1,10 +1,9 @@
 import { goto } from '$app/navigation'
-import { resourceType } from '../constants/resources'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
 import { isHTML, processHTML, type HTMLPageData } from './lang/html'
 import logger from './logger'
-import { getResourceType, getPossibleUrls, processUrl } from './url'
+import { processUrl } from './url'
 
 export class Preview {
   // Parent
@@ -35,10 +34,11 @@ export class Preview {
   }
 
   async render(url: string) {
-    const urlType = getResourceType(url)
+    const urls = processUrl(url)
 
-    if (urlType === resourceType.HTML) {
-      const htmlURL = processUrl(url)
+    if (urls.length === 1) {
+      // if the URL is an HTML file, we can just load it
+      const htmlURL = urls[0]
 
       this.load(htmlURL)
         .then(async (data) => {
@@ -47,36 +47,27 @@ export class Preview {
         .catch((error) => {
           console.error(error)
         })
+    } else {
+      // otherwise we have to attempt to load 3 possible URLs
+      const errorTable = new Array(urls.length).fill(false)
 
-      // if we are loading a file at this point we can stop here
-      return
-    }
+      await Promise.all(
+        urls.map((u, idx) =>
+          this.load(u)
+            // eslint-disable-next-line no-loop-func
+            .then(async (data) => {
+              await this.loadHTML(data, u)
+            })
+            .catch(() => {
+              errorTable[idx] = true
+            }),
+        ),
+      )
 
-    // otherwise we have to figure out where the file is in the repo
-    const urls: string[] = getPossibleUrls(url)
-
-    const errorTable = {
-      main: false,
-      master: false,
-    }
-
-    await Promise.all(
-      urls.map((u) =>
-        this.load(u)
-          // eslint-disable-next-line no-loop-func
-          .then(async (data) => {
-            await this.loadHTML(data, u)
-          })
-          .catch(() => {
-            if (u.includes('main')) errorTable.main = true
-            if (u.includes('master')) errorTable.master = true
-          }),
-      ),
-    )
-
-    if (errorTable.main && errorTable.master) {
-      // TODO: only throw error if the user is attempting to load without a file path
-      // throw Error('Could not find index.html on <main> or <master> branch')
+      if (errorTable.every((e) => e)) {
+        // TODO: only throw error if the user is attempting to load without a file path
+        // throw Error('Could not find index.html on <main> or <master> branch')
+      }
     }
   }
 
