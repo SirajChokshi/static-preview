@@ -40,8 +40,8 @@
   </section>
 
   <p class:error={isError}>
-    Link to a repository with an index.html file or a directly to any HTML file
-    on Github.
+    Link to a repository/folder with an index.html file on Github or Gitlab or a
+    directly to any HTML file.
   </p>
 </div>
 
