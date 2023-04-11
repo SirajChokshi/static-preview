@@ -8,7 +8,7 @@ Many websites are available on Github, but remain unhosted by their creators. St
 
 In other words, Static Preview is a tool to "host" websites locally.
 
-A hosted version application is available at https://static-preview.vercel.app.
+A hosted version of the application is available at https://static-preview.vercel.app.
 
 ## Limitations
 
