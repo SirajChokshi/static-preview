@@ -142,21 +142,26 @@ export class Preview {
     // Load page JS
     const $script =
       this.iframeDocument.document.querySelectorAll<HTMLScriptElement>(
-        'script[type="text/javascript"]',
+        'script[src]',
       )
 
-    const scripts = [...$script].map((s) => {
-      const { src } = s
-      if (src.includes('//raw.githubusercontent.com')) {
-        // TODO: Check if it's from raw.github.com or bitbucket.org
-        return this.load(src) // Then add it to scripts queue and fetch using CORS proxy
-      }
-      s.removeAttribute('type')
-      return s.innerHTML // Add inline script to queue to eval in order
-    })
+    const scripts = [...$script]
+      .filter(({ src }) => this.shouldProxyScript(src))
+      .map(async (script) => {
+        const payload = await this.load(script.src)
+        const scriptType = script.getAttribute('type')?.toLowerCase().trim()
+
+        // Prevent the browser from trying to load unsupported raw URLs directly.
+        script.remove()
+
+        return {
+          payload,
+          type: scriptType === 'module' ? 'module' : undefined,
+        }
+      })
 
     await Promise.all(scripts).then((res) => {
-      res.forEach((r) => this.appendToHead(r, 'script'))
+      res.forEach(({ payload, type }) => this.appendScriptToHead(payload, type))
 
       this.iframeDocument.document.dispatchEvent(
         new Event('DOMContentLoaded', { bubbles: true, cancelable: true }),
@@ -165,17 +170,48 @@ export class Preview {
   }
 
   /**
-   * Inline CSS or JS into the preview body
+   * Determine whether a script source should be fetched via proxy.
    */
-  private appendToHead(data: string, element: 'script' | 'style'): void {
-    // Method to load CSS, JS, and other elements into the preview body.
+  private shouldProxyScript(src: string): boolean {
+    return (
+      src.includes('//raw.githubusercontent.com') ||
+      src.includes('/-/raw/')
+    )
+  }
+
+  /**
+   * Inline CSS into the preview head.
+   */
+  private appendToHead(data: string, element: 'style'): void {
+    // Method to load CSS into the preview head.
 
     if (!data) {
       return
     }
 
     const tag = this.iframeDocument.document.createElement(element)
-    tag.innerHTML = data
+    tag.textContent = data
+    this.iframeDocument.document.head.appendChild(tag)
+  }
+
+  /**
+   * Inline JS into the preview head.
+   */
+  private appendScriptToHead(
+    data: string,
+    type?: 'module',
+  ): void {
+    if (!data) {
+      return
+    }
+
+    const tag = this.iframeDocument.document.createElement('script')
+
+    if (type) {
+      tag.type = type
+    }
+
+    tag.textContent = data
     this.iframeDocument.document.head.appendChild(tag)
   }
 
