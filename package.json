@@ -12,12 +12,13 @@
     "prepare": "svelte-kit sync",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "prettier --check . && eslint src tests --ext .ts,.js",
+    "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
     "test": "jest"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.2",
+    "@eslint/js": "^9.39.4",
     "@sveltejs/adapter-auto": "^7.0.1",
     "@sveltejs/kit": "^2.56.1",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
@@ -31,6 +32,8 @@
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-svelte": "^3.17.0",
+    "globals": "^17.4.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "jest-transform-stub": "^2.0.0",
