@@ -124,19 +124,27 @@ export class Preview {
       this.iframeDocument.document.querySelectorAll<HTMLLinkElement>(
         'link[rel=stylesheet]',
       )
-    const links = [...$link].map(async ({ href }: { href: string }) => {
-      const payload = await this.load(`${href}`)
-      return {
-        url: href,
-        payload,
-      }
-    })
-
-    await Promise.all(links).then((res) => {
-      res.forEach(({ payload, url: cssUrl }) => {
-        const processedCSS = processCSS(payload, cssUrl)
-        this.appendToHead(processedCSS, 'style')
+    const links = [...$link]
+      .map(({ href }) => href)
+      .filter((href) => this.shouldProxyStylesheet(href))
+      .map(async (href) => {
+        const payload = await this.load(href)
+        return {
+          url: href,
+          payload,
+        }
       })
+
+    const stylesheetResults = await Promise.allSettled(links)
+    stylesheetResults.forEach((result) => {
+      if (result.status !== 'fulfilled') {
+        logger.warn(`Skipping stylesheet after failed fetch: ${result.reason}`)
+        return
+      }
+
+      const { payload, url: cssUrl } = result.value
+      const processedCSS = processCSS(payload, cssUrl)
+      this.appendToHead(processedCSS, 'style')
     })
 
     // Load page JS
@@ -160,21 +168,39 @@ export class Preview {
         }
       })
 
-    await Promise.all(scripts).then((res) => {
-      res.forEach(({ payload, type }) => this.appendScriptToHead(payload, type))
+    const scriptResults = await Promise.allSettled(scripts)
+    scriptResults.forEach((result) => {
+      if (result.status !== 'fulfilled') {
+        logger.warn(`Skipping script after failed fetch: ${result.reason}`)
+        return
+      }
 
-      this.iframeDocument.document.dispatchEvent(
-        new Event('DOMContentLoaded', { bubbles: true, cancelable: true }),
-      ) // Dispatch DOMContentLoaded event after loading all scripts
+      const { payload, type } = result.value
+      this.appendScriptToHead(payload, type)
     })
+
+    this.iframeDocument.document.dispatchEvent(
+      new Event('DOMContentLoaded', { bubbles: true, cancelable: true }),
+    ) // Dispatch DOMContentLoaded event after loading all scripts
+  }
+
+  /**
+   * Determine whether a script source should be fetched via proxy.
+   */
+  private shouldProxyStylesheet(href: string): boolean {
+    return this.isProxySupportedUrl(href)
   }
 
   /**
    * Determine whether a script source should be fetched via proxy.
    */
   private shouldProxyScript(src: string): boolean {
+    return this.isProxySupportedUrl(src)
+  }
+
+  private isProxySupportedUrl(url: string): boolean {
     return (
-      src.includes('//raw.githubusercontent.com') || src.includes('/-/raw/')
+      url.includes('//raw.githubusercontent.com') || url.includes('/-/raw/')
     )
   }
 

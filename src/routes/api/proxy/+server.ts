@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit'
+import { appendFileSync } from 'node:fs'
 import {
   buildCorsHeaders,
   getAllowedProxyOrigins,
@@ -12,6 +13,28 @@ import {
 } from '../../../utils/proxy'
 
 export const prerender = false
+
+function writeDebugLog(
+  hypothesisId: string,
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+) {
+  try {
+    appendFileSync(
+      '/opt/cursor/logs/debug.log',
+      `${JSON.stringify({
+        hypothesisId,
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+      })}\n`,
+    )
+  } catch {
+    // Best-effort instrumentation only.
+  }
+}
 
 function enforceProxyPolicy(request: Request, requestUrl: URL) {
   const allowedOrigins = getAllowedProxyOrigins(
@@ -39,6 +62,15 @@ export function OPTIONS({ request, url }) {
 export async function GET({ request, url, fetch }) {
   const corsHeaders = enforceProxyPolicy(request, url)
 
+  // #region agent log
+  writeDebugLog('A', 'src/routes/api/proxy/+server.ts:69', 'Proxy GET entry', {
+    urlParam: url.searchParams.get('url'),
+    secFetchDest: request.headers.get('sec-fetch-dest'),
+    requestOrigin:
+      request.headers.get('origin') ?? request.headers.get('referer'),
+  })
+  // #endregion
+
   if (isNavigationProxyRequest(request.headers.get('sec-fetch-dest'))) {
     throw error(403, 'Direct navigation to proxy endpoint is not allowed')
   }
@@ -49,11 +81,37 @@ export async function GET({ request, url, fetch }) {
     target = parseProxyTarget(url.searchParams.get('url'))
   } catch (err) {
     if (err instanceof ProxyRequestError) {
+      // #region agent log
+      writeDebugLog(
+        'A',
+        'src/routes/api/proxy/+server.ts:85',
+        'Proxy target rejected by policy',
+        {
+          urlParam: url.searchParams.get('url'),
+          status: err.status,
+          reason: err.message,
+        },
+      )
+      // #endregion
+
       throw error(err.status, err.message)
     }
 
     throw error(400, 'Invalid url param')
   }
+
+  // #region agent log
+  writeDebugLog(
+    'C',
+    'src/routes/api/proxy/+server.ts:102',
+    'Proxy target accepted',
+    {
+      target: target.toString(),
+      hostname: target.hostname,
+      pathname: target.pathname,
+    },
+  )
+  // #endregion
 
   let upstream: Response
 
@@ -65,8 +123,33 @@ export async function GET({ request, url, fetch }) {
       },
     })
   } catch {
+    // #region agent log
+    writeDebugLog(
+      'D',
+      'src/routes/api/proxy/+server.ts:125',
+      'Upstream fetch threw network error',
+      {
+        target: target.toString(),
+      },
+    )
+    // #endregion
+
     throw error(502, `Could not load ${target.toString()}`)
   }
+
+  // #region agent log
+  writeDebugLog(
+    'C',
+    'src/routes/api/proxy/+server.ts:138',
+    'Upstream fetch returned response',
+    {
+      target: target.toString(),
+      status: upstream.status,
+      contentType: upstream.headers.get('content-type'),
+      contentLength: upstream.headers.get('content-length'),
+    },
+  )
+  // #endregion
 
   const contentLength = Number(upstream.headers.get('content-length'))
   if (
@@ -107,6 +190,19 @@ export async function GET({ request, url, fetch }) {
   if (lastModified) {
     headers.set('Last-Modified', lastModified)
   }
+
+  // #region agent log
+  writeDebugLog(
+    'C',
+    'src/routes/api/proxy/+server.ts:190',
+    'Proxy returning payload',
+    {
+      target: target.toString(),
+      status: upstream.status,
+      payloadBytes: payload.byteLength,
+    },
+  )
+  // #endregion
 
   return new Response(payload, {
     status: upstream.status,

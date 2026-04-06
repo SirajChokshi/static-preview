@@ -9,26 +9,49 @@
 
   let loading = true
   let preview: Preview | undefined = undefined
+  let renderNonce = 0
 
   let title = ''
 
   $: {
     if (url) {
       const decodedUrl = decodeURIComponent(url)
+      const currentRender = ++renderNonce
 
       if (typeof window !== 'undefined') {
         if (!preview) {
           preview = new Preview('#site-frame')
         }
 
-        preview.render(decodedUrl).then(() => {
-          loading = false
+        loading = true
+        title = ''
 
-          if (preview?.pageData.title) {
-            // update with page title or URL
-            title = preview.pageData.title
-          }
-        })
+        preview
+          .render(decodedUrl)
+          .then(() => {
+            if (currentRender !== renderNonce) {
+              return
+            }
+
+            if (preview?.pageData.title) {
+              // update with page title or URL
+              title = preview.pageData.title
+            }
+          })
+          .catch(() => {
+            if (currentRender !== renderNonce) {
+              return
+            }
+
+            title = decodedUrl
+          })
+          .finally(() => {
+            if (currentRender !== renderNonce) {
+              return
+            }
+
+            loading = false
+          })
       }
     }
   }
