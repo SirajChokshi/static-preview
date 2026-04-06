@@ -120,14 +120,14 @@ export function getAllowedProxyOrigins(
   configuredOrigins: string | undefined,
   requestOrigin: string,
 ): string[] {
-  const allowedOrigins = configuredOrigins
-    ?.split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-    .map((origin) => normalizeOrigin(origin))
-    .filter((origin): origin is string => Boolean(origin))
+  if (configuredOrigins !== undefined) {
+    const allowedOrigins = configuredOrigins
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+      .map((origin) => normalizeOrigin(origin))
+      .filter((origin): origin is string => Boolean(origin))
 
-  if (allowedOrigins && allowedOrigins.length > 0) {
     return [...new Set(allowedOrigins)]
   }
 
