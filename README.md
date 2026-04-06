@@ -21,12 +21,6 @@ Static Preview is not a full-fledged web server. It is a tool to preview static 
 
 Built with SvelteKit, TypeScript, and SCSS.
 
-This project now targets Node.js 24. If you use `nvm`, run:
-
-```sh
-nvm use
-```
-
 Get started by cloning the repo and running:
 
 ```sh
