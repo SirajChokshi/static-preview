@@ -21,9 +21,9 @@ const formatMessage = (message: LogMessage): string => {
 }
 
 const styledLogger =
-  (background: string, color: string) =>
+  (logFn: (...data: unknown[]) => void, background: string, color: string) =>
   (message: LogMessage): void => {
-    console.log(
+    logFn(
       `%c${formatMessage(message)}`,
       `
     font-size: 12px;
@@ -43,9 +43,9 @@ const logger: Logger = isProduction
       error: noop,
     }
   : {
-      log: styledLogger('black', 'white'),
-      warn: styledLogger('#200e00', '#feeada'),
-      error: styledLogger('#4a0000', '#ffd7d7'),
+      log: styledLogger(console.log, 'black', 'white'),
+      warn: styledLogger(console.warn, '#200e00', '#feeada'),
+      error: styledLogger(console.error, '#4a0000', '#ffd7d7'),
     }
 
 export default logger
