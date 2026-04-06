@@ -51,8 +51,5 @@
     "typescript": "^5.9.3",
     "vite": "^8.0.5"
   },
-  "type": "module",
-  "dependencies": {
-    "logbench": "^0.0.2"
-  }
+  "type": "module"
 }
