@@ -156,7 +156,7 @@ export class Preview {
 
         return {
           payload,
-          type: scriptType === 'module' ? 'module' : undefined,
+          type: scriptType === 'module' ? ('module' as const) : undefined,
         }
       })
 
