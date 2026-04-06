@@ -61,6 +61,13 @@ describe('[Proxy] target validation', () => {
     )
   })
 
+  it('rejects GitLab raw URLs with no file segment', () => {
+    expectProxyError(
+      () => parseProxyTarget('https://gitlab.com/acme/site/-/raw/main'),
+      403,
+    )
+  })
+
   it('rejects path traversal attempts', () => {
     expectProxyError(
       () =>

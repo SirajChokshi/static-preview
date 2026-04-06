@@ -70,7 +70,7 @@ function isAllowedGitlabRawPath(pathname: string): boolean {
 
   // /:owner/(optional subgroups...)/:repo/-/raw/:branch/:file...
   if (rawPathSegment < 2) return false
-  if (pathSegments.length <= rawPathSegment + 2) return false
+  if (pathSegments.length <= rawPathSegment + 3) return false
 
   return true
 }
