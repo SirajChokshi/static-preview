@@ -17,7 +17,9 @@ export class ProxyRequestError extends Error {
   }
 }
 
-function normalizeOrigin(origin: string | null | undefined): string | undefined {
+function normalizeOrigin(
+  origin: string | null | undefined,
+): string | undefined {
   if (!origin) return undefined
 
   try {
@@ -37,7 +39,9 @@ function hasUnsafePathSegment(pathSegments: string[]): boolean {
       return true
     }
 
-    return decodedSegment === '' || decodedSegment === '.' || decodedSegment === '..'
+    return (
+      decodedSegment === '' || decodedSegment === '.' || decodedSegment === '..'
+    )
   })
 }
 

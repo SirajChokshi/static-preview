@@ -47,14 +47,16 @@ describe('[Proxy] target validation', () => {
 
   it('rejects non-allowlisted hosts', () => {
     expectProxyError(
-      () => parseProxyTarget('https://github.com/acme/site/blob/main/index.html'),
+      () =>
+        parseProxyTarget('https://github.com/acme/site/blob/main/index.html'),
       403,
     )
   })
 
   it('rejects non-raw GitLab URLs', () => {
     expectProxyError(
-      () => parseProxyTarget('https://gitlab.com/acme/site/-/blob/main/index.html'),
+      () =>
+        parseProxyTarget('https://gitlab.com/acme/site/-/blob/main/index.html'),
       403,
     )
   })

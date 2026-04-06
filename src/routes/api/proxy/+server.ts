@@ -1,4 +1,3 @@
-import { env } from '$env/dynamic/private'
 import { error } from '@sveltejs/kit'
 import {
   buildCorsHeaders,
@@ -14,7 +13,7 @@ export const prerender = false
 
 function enforceProxyPolicy(request: Request, requestUrl: URL) {
   const allowedOrigins = getAllowedProxyOrigins(
-    env.PROXY_ALLOWED_ORIGINS,
+    process.env.PROXY_ALLOWED_ORIGINS,
     requestUrl.origin,
   )
   const requestOrigin = getRequestOrigin(request.headers)
@@ -82,7 +81,10 @@ export async function GET({ request, url, fetch }) {
     upstream.headers.get('content-type') ?? 'text/plain; charset=utf-8',
   )
   headers.set('X-Content-Type-Options', 'nosniff')
-  headers.set('Cache-Control', upstream.headers.get('cache-control') ?? 'public, max-age=300')
+  headers.set(
+    'Cache-Control',
+    upstream.headers.get('cache-control') ?? 'public, max-age=300',
+  )
 
   const etag = upstream.headers.get('etag')
   if (etag) {
