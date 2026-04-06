@@ -20,6 +20,6 @@
 - The `prepare` script (`svelte-kit sync`) runs automatically during `npm install`. If you see import errors for `$app/*` modules, re-run `npm install`.
 - The dev server uses Vite's default port **5173**. Pass `--host 0.0.0.0` to expose it outside localhost: `npm run dev -- --host 0.0.0.0`.
 - Requires **Node.js >= 24** (`engines` field in `package.json`). Use `nvm use 24` if multiple versions are installed.
-- Preview functionality depends on the external CORS proxy `api.codetabs.com`. If previews fail to load, this third-party service may be down.
+- Preview functionality uses the internal `/api/proxy` endpoint. Configure `PROXY_ALLOWED_ORIGINS` with deployment origins (comma separated) to restrict CORS.
 - `svelte-preprocess` deprecation warnings about "defaults" are expected and harmless.
 - The `package-lock.json` uses npm; do not mix with other package managers.

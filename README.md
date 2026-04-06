@@ -28,6 +28,24 @@ npm i
 npm run dev -- --open
 ```
 
+## Proxy Configuration
+
+Preview fetching now uses the first-party SvelteKit endpoint at `/api/proxy` (instead of `api.codetabs.com`), which requires a server adapter such as Vercel.
+
+To lock down CORS for your deployment domain(s), configure:
+
+```sh
+PROXY_ALLOWED_ORIGINS=https://static-preview.vercel.app,http://localhost:5173
+```
+
+Security constraints in `/api/proxy`:
+
+- only proxies `https://raw.githubusercontent.com/...` URLs
+- only proxies GitLab `https://gitlab.com/.../-/raw/...` URLs
+- rejects non-HTTPS targets, query strings, and path traversal
+- allows requests only from configured origins (checks `Origin` then `Referer`)
+- enforces a max upstream payload size of 5 MiB
+
 ## Testing
 
 We use [Jest](https://jestjs.io/) for unit testing. Only URL parsing is tested to prevent regressions.
