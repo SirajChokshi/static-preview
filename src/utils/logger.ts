@@ -1,60 +1,51 @@
-import logbench from 'logbench'
+type LogMessage = unknown
 
 type Logger = {
-  log: (message: unknown) => void
-  warn: (message: unknown) => void
-  error: (message: unknown) => void
+  log: (message: LogMessage) => void
+  warn: (message: LogMessage) => void
+  error: (message: LogMessage) => void
 }
 
-type LogbenchFactory = (options: {
-  logFn: (message: unknown) => void
-  warnFn: (message: unknown) => void
-  isProduction: boolean
-}) => Logger
+const noop = () => {}
 
-const createLogger = (factory: unknown): Logger => {
-  if (typeof factory === 'function') {
-    return (factory as LogbenchFactory)({
-      logFn: (message: unknown) =>
-        console.log(
-          `%c${message}`,
-          `
+const formatMessage = (message: LogMessage): string => {
+  if (typeof message === 'string') {
+    return message
+  }
+
+  try {
+    return JSON.stringify(message, null, 2)
+  } catch {
+    return String(message)
+  }
+}
+
+const styledLogger =
+  (method: 'log' | 'warn' | 'error', background: string, color: string) =>
+  (message: LogMessage): void => {
+    console[method](
+      `%c${formatMessage(message)}`,
+      `
     font-size: 12px;
-    background: black;
-    color: white;
+    background: ${background};
+    color: ${color};
     padding: 5px;
    `,
-        ),
-      warnFn: (message: unknown) =>
-        console.log(
-          `%c${message}`,
-          `
-     font-size: 12px;
-     background: #200e00;
-     color: #feeada; 
-     padding: 5px;
-    `,
-        ),
-      isProduction: process.env.NODE_ENV === 'production',
-    })
+    )
   }
 
-  // Fallback for environments where the default export shape differs.
-  return {
-    log: (message) => console.log(message),
-    warn: (message) => console.warn(message),
-    error: (message) => console.error(message),
-  }
-}
+const isProduction = process.env.NODE_ENV === 'production'
 
-const logger = createLogger(logbench)
+const logger: Logger = isProduction
+  ? {
+      log: noop,
+      warn: noop,
+      error: noop,
+    }
+  : {
+      log: styledLogger('log', 'black', 'white'),
+      warn: styledLogger('warn', '#200e00', '#feeada'),
+      error: styledLogger('error', '#4a0000', '#ffd7d7'),
+    }
 
-// Keep existing styling behavior for compatible environments.
-const styledLogger = createLogger((logbench as { default?: unknown }).default)
-
-const resolvedLogger =
-  typeof (logbench as { default?: unknown }).default === 'function'
-    ? styledLogger
-    : logger
-
-export default resolvedLogger
+export default logger

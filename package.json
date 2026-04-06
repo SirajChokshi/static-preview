@@ -19,7 +19,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.29.2",
     "@eslint/js": "^8.57.1",
-    "@sveltejs/adapter-auto": "^7.0.1",
+    "@sveltejs/adapter-vercel": "^6.3.3",
     "@sveltejs/kit": "^2.56.1",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@testing-library/jest-dom": "^6.9.1",
@@ -51,8 +51,5 @@
     "typescript": "^5.9.3",
     "vite": "^8.0.5"
   },
-  "type": "module",
-  "dependencies": {
-    "logbench": "^0.0.2"
-  }
+  "type": "module"
 }
