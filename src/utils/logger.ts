@@ -1,27 +1,51 @@
-import logbench from 'logbench'
+type LogMessage = unknown
 
-const logger = logbench({
-  logFn: (message) =>
+type Logger = {
+  log: (message: LogMessage) => void
+  warn: (message: LogMessage) => void
+  error: (message: LogMessage) => void
+}
+
+const noop = () => {}
+
+const formatMessage = (message: LogMessage): string => {
+  if (typeof message === 'string') {
+    return message
+  }
+
+  try {
+    return JSON.stringify(message, null, 2)
+  } catch {
+    return String(message)
+  }
+}
+
+const styledLogger =
+  (background: string, color: string) =>
+  (message: LogMessage): void => {
     console.log(
-      `%c${message}`,
+      `%c${formatMessage(message)}`,
       `
     font-size: 12px;
-    background: black;
-    color: white;
+    background: ${background};
+    color: ${color};
     padding: 5px;
    `,
-    ),
-  warnFn: (message) =>
-    console.log(
-      `%c${message}`,
-      `
-     font-size: 12px;
-     background: #200e00;
-     color: #feeada; 
-     padding: 5px;
-    `,
-    ),
-  isProduction: process.env.NODE_ENV === 'production',
-})
+    )
+  }
+
+const isProduction = process.env.NODE_ENV === 'production'
+
+const logger: Logger = isProduction
+  ? {
+      log: noop,
+      warn: noop,
+      error: noop,
+    }
+  : {
+      log: styledLogger('black', 'white'),
+      warn: styledLogger('#200e00', '#feeada'),
+      error: styledLogger('#4a0000', '#ffd7d7'),
+    }
 
 export default logger
