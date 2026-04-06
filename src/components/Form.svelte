@@ -29,12 +29,16 @@
 </script>
 
 <div>
-  <section role="form" on:keydown={handleKeyDown}>
+  <section role="form">
     <div class="input-wrapper">
       <div class="icon-wrapper">
         <svelte:component this={RESOURCES[urlResource].icon} />
       </div>
-      <input bind:value={url} placeholder="e.g. https://example.com" />
+      <input
+        bind:value={url}
+        placeholder="e.g. https://example.com"
+        on:keydown={handleKeyDown}
+      />
     </div>
     <Button on:click={handleSubmit} disabled={!url}>Preview</Button>
   </section>

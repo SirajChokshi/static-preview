@@ -6,14 +6,14 @@
 
 ### Commands
 
-| Task | Command |
-|------|---------|
-| Install deps | `npm install` |
-| Dev server | `npm run dev` (serves on `http://localhost:3000`) |
-| Lint | `npm run lint` (prettier + eslint) |
-| Tests | `npm run test` (Jest — URL parsing only) |
-| Build | `npm run build` |
-| Type check | `npm run check` |
+| Task         | Command                                           |
+| ------------ | ------------------------------------------------- |
+| Install deps | `npm install`                                     |
+| Dev server   | `npm run dev` (serves on `http://localhost:3000`) |
+| Lint         | `npm run lint` (prettier + eslint)                |
+| Tests        | `npm run test` (Jest — URL parsing only)          |
+| Build        | `npm run build`                                   |
+| Type check   | `npm run check`                                   |
 
 ### Notes
 

@@ -53,7 +53,7 @@
   >
 </header>
 
-<iframe title="Site Preview" id="site-frame" />
+<iframe title="Site Preview" id="site-frame"></iframe>
 
 {#if loading}
   <div class="splash">
