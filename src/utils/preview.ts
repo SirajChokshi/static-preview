@@ -141,22 +141,53 @@ export class Preview {
 
     // Load page JS
     const $script =
-      this.iframeDocument.document.querySelectorAll<HTMLScriptElement>(
-        'script[type="text/javascript"]',
-      )
+      this.iframeDocument.document.querySelectorAll<HTMLScriptElement>('script')
+    const baseUrl = new URL(this.iframeDocument.document.baseURI)
 
-    const scripts = [...$script].map((s) => {
-      const { src } = s
-      if (src.includes('//raw.githubusercontent.com')) {
-        // TODO: Check if it's from raw.github.com or bitbucket.org
-        return this.load(src) // Then add it to scripts queue and fetch using CORS proxy
+    const scripts = [...$script].map(async (s) => {
+      if (s.hasAttribute('data-static-preview-fetch-resolver')) {
+        // Ignore injected resolver script.
+        return null
       }
-      s.removeAttribute('type')
-      return s.innerHTML // Add inline script to queue to eval in order
+
+      const type = s.type.toLowerCase()
+      const isClassicType =
+        type === '' ||
+        type === 'text/javascript' ||
+        type === 'application/javascript'
+
+      if (!isClassicType) {
+        return null
+      }
+
+      if (s.src) {
+        const srcUrl = new URL(s.src, this.iframeDocument.document.baseURI)
+
+        if (
+          srcUrl.origin === baseUrl.origin ||
+          srcUrl.hostname === 'raw.githubusercontent.com'
+        ) {
+          return this.load(srcUrl.href)
+        }
+
+        // Let browser handle non-repository script URLs.
+        return null
+      }
+
+      // Existing support for explicitly text/javascript inline scripts.
+      if (type === 'text/javascript') {
+        s.removeAttribute('type')
+      }
+
+      return s.innerHTML
     })
 
     await Promise.all(scripts).then((res) => {
-      res.forEach((r) => this.appendToHead(r, 'script'))
+      res.forEach((r) => {
+        if (r) {
+          this.appendToHead(r, 'script')
+        }
+      })
 
       this.iframeDocument.document.dispatchEvent(
         new Event('DOMContentLoaded', { bubbles: true, cancelable: true }),
