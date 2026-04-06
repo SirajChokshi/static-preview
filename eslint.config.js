@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import eslintConfigPrettier from 'eslint-config-prettier/flat'
 import globals from 'globals'
 import tseslint from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
@@ -81,4 +82,5 @@ export default [
       'svelte/no-navigation-without-resolve': 'off',
     },
   },
+  eslintConfigPrettier,
 ]
