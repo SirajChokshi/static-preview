@@ -41,18 +41,15 @@ export class Preview {
       // if the URL is an HTML file, we can just load it
       const htmlURL = urls[0]
 
-      this.load(htmlURL)
-        .then(async (data) => {
-          await this.loadHTML(data, htmlURL)
-        })
-        .catch(() => {
-          throw new PreviewError(
-            `Could not find any valid HTML files. Tried:\n${urls.join(
-              '\n - ',
-            )}`,
-            errorType.NOT_FOUND,
-          )
-        })
+      try {
+        const data = await this.load(htmlURL)
+        await this.loadHTML(data, htmlURL)
+      } catch {
+        throw new PreviewError(
+          `Could not find any valid HTML files. Tried:\n${urls.join('\n - ')}`,
+          errorType.NOT_FOUND,
+        )
+      }
     } else {
       // otherwise we have to attempt to load 3 possible URLs
       const errorTable = new Array(urls.length).fill(false)

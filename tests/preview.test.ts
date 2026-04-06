@@ -116,4 +116,50 @@ describe('[Preview] resource loading resilience', () => {
     const preview = new Preview('#site-frame')
     await expect(preview.render(htmlUrl)).resolves.toBeUndefined()
   })
+
+  it('awaits single-url rendering before resolving', async () => {
+    const htmlUrl =
+      'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/index.html'
+
+    const htmlPayload = `
+      <!doctype html>
+      <html>
+        <head>
+          <title>Delayed OpenEmu</title>
+        </head>
+        <body><h1>Site</h1></body>
+      </html>
+    `
+
+    let resolveFetch:
+      | ((value: Response | PromiseLike<Response>) => void)
+      | undefined
+
+    const fetchMock = jest.fn(async (input: string | URL | Request) => {
+      const target = getProxyTarget(input)
+
+      if (target === htmlUrl) {
+        return await new Promise<Response>((resolve) => {
+          resolveFetch = resolve
+        })
+      }
+
+      throw new Error(`Unexpected proxy target requested: ${target}`)
+    })
+
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    const preview = new Preview('#site-frame')
+    const renderPromise = preview.render(htmlUrl)
+    let isSettled = false
+    void renderPromise.then(() => {
+      isSettled = true
+    })
+
+    await Promise.resolve()
+    expect(isSettled).toBe(false)
+
+    resolveFetch?.(mockResponse(200, htmlPayload))
+    await expect(renderPromise).resolves.toBeUndefined()
+  })
 })
