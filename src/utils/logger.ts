@@ -47,14 +47,9 @@ const createLogger = (factory: unknown): Logger => {
   }
 }
 
-const logger = createLogger(logbench)
+const factory =
+  typeof logbench === 'function'
+    ? logbench
+    : (logbench as { default?: unknown }).default
 
-// Keep existing styling behavior for compatible environments.
-const styledLogger = createLogger((logbench as { default?: unknown }).default)
-
-const resolvedLogger =
-  typeof (logbench as { default?: unknown }).default === 'function'
-    ? styledLogger
-    : logger
-
-export default resolvedLogger
+export default createLogger(factory)
