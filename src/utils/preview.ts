@@ -174,8 +174,7 @@ export class Preview {
    */
   private shouldProxyScript(src: string): boolean {
     return (
-      src.includes('//raw.githubusercontent.com') ||
-      src.includes('/-/raw/')
+      src.includes('//raw.githubusercontent.com') || src.includes('/-/raw/')
     )
   }
 
@@ -197,10 +196,7 @@ export class Preview {
   /**
    * Inline JS into the preview head.
    */
-  private appendScriptToHead(
-    data: string,
-    type?: 'module',
-  ): void {
+  private appendScriptToHead(data: string, type?: 'module'): void {
     if (!data) {
       return
     }
