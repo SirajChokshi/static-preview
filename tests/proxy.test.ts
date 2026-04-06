@@ -3,9 +3,11 @@ import {
   getAllowedProxyOrigins,
   getRequestOrigin,
   isAllowedOrigin,
+  isNavigationProxyRequest,
   isAllowedProxyTarget,
   parseProxyTarget,
   ProxyRequestError,
+  sanitizeProxyContentType,
 } from '../src/utils/proxy'
 
 function expectProxyError(fn: () => void, status: number) {
@@ -141,5 +143,31 @@ describe('[Proxy] origin and CORS policy', () => {
       'https://preview.example.com',
     ])
     expect(blockedCorsHeaders.get('Access-Control-Allow-Origin')).toBeNull()
+  })
+})
+
+describe('[Proxy] response hardening', () => {
+  it('blocks navigation-style requests', () => {
+    expect(isNavigationProxyRequest('document')).toBe(true)
+    expect(isNavigationProxyRequest('iframe')).toBe(true)
+    expect(isNavigationProxyRequest('empty')).toBe(false)
+    expect(isNavigationProxyRequest(null)).toBe(false)
+  })
+
+  it('downgrades HTML content types to plain text', () => {
+    expect(sanitizeProxyContentType('text/html; charset=utf-8')).toBe(
+      'text/plain; charset=utf-8',
+    )
+    expect(sanitizeProxyContentType('application/xhtml+xml')).toBe(
+      'text/plain; charset=utf-8',
+    )
+  })
+
+  it('keeps non-HTML content types unchanged', () => {
+    expect(sanitizeProxyContentType('text/css')).toBe('text/css')
+    expect(sanitizeProxyContentType('application/javascript')).toBe(
+      'application/javascript',
+    )
+    expect(sanitizeProxyContentType(null)).toBe('text/plain; charset=utf-8')
   })
 })

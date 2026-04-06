@@ -5,6 +5,14 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://static-preview.vercel.app',
   'http://localhost:5173',
 ]
+const NAVIGATION_DESTINATIONS = new Set([
+  'document',
+  'iframe',
+  'frame',
+  'object',
+  'embed',
+])
+const SAFE_PROXY_CONTENT_TYPE = 'text/plain; charset=utf-8'
 
 export const MAX_PROXY_RESPONSE_BYTES = 5 * 1024 * 1024 // 5 MiB
 
@@ -166,4 +174,27 @@ export function buildCorsHeaders(
   }
 
   return headers
+}
+
+export function isNavigationProxyRequest(secFetchDest: string | null): boolean {
+  if (!secFetchDest) return false
+  return NAVIGATION_DESTINATIONS.has(secFetchDest.toLowerCase())
+}
+
+export function sanitizeProxyContentType(
+  upstreamContentType: string | null,
+): string {
+  if (!upstreamContentType) {
+    return SAFE_PROXY_CONTENT_TYPE
+  }
+
+  const normalizedContentType = upstreamContentType.toLowerCase()
+  if (
+    normalizedContentType.startsWith('text/html') ||
+    normalizedContentType.startsWith('application/xhtml+xml')
+  ) {
+    return SAFE_PROXY_CONTENT_TYPE
+  }
+
+  return upstreamContentType
 }

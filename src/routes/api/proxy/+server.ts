@@ -4,9 +4,11 @@ import {
   getAllowedProxyOrigins,
   getRequestOrigin,
   isAllowedOrigin,
+  isNavigationProxyRequest,
   MAX_PROXY_RESPONSE_BYTES,
   parseProxyTarget,
   ProxyRequestError,
+  sanitizeProxyContentType,
 } from '../../../utils/proxy'
 
 export const prerender = false
@@ -36,6 +38,10 @@ export function OPTIONS({ request, url }) {
 
 export async function GET({ request, url, fetch }) {
   const corsHeaders = enforceProxyPolicy(request, url)
+
+  if (isNavigationProxyRequest(request.headers.get('sec-fetch-dest'))) {
+    throw error(403, 'Direct navigation to proxy endpoint is not allowed')
+  }
 
   let target: URL
 
@@ -78,9 +84,15 @@ export async function GET({ request, url, fetch }) {
   const headers = new Headers(corsHeaders)
   headers.set(
     'Content-Type',
-    upstream.headers.get('content-type') ?? 'text/plain; charset=utf-8',
+    sanitizeProxyContentType(upstream.headers.get('content-type')),
   )
   headers.set('X-Content-Type-Options', 'nosniff')
+  headers.set('Content-Disposition', 'attachment')
+  headers.set(
+    'Content-Security-Policy',
+    "sandbox; default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  )
+  headers.set('X-Frame-Options', 'DENY')
   headers.set(
     'Cache-Control',
     upstream.headers.get('cache-control') ?? 'public, max-age=300',
