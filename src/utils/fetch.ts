@@ -2,7 +2,7 @@ import { PreviewError, errorType } from './errors'
 
 export async function proxyFetch(url: string) {
   const res = await fetch(
-    `https://api.codetabs.com/v1/proxy/?quest=${url}`,
+    `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
     undefined,
   )
 
