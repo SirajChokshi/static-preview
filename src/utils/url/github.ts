@@ -1,4 +1,4 @@
-import type { Lexer, TokenizedUrl } from 'src/types/utils'
+import type { Lexer, TokenizedUrl } from '../../types/utils'
 import { PreviewError, errorType } from '../errors'
 import { resourceType } from '../../types/resources'
 
