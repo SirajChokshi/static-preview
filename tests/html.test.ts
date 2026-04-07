@@ -1,7 +1,6 @@
 import { processHTML } from '../src/utils/lang/html'
 
-const HTML_URL =
-  'https://gitlab.com/sirajchokshi/static-preview-test/-/raw/main/wasm.html'
+const HTML_URL = 'https://example.invalid/example-site/main/wasm.html'
 
 describe('[HTML] processHTML', () => {
   it('injects base url and runtime fetch resolver', () => {
@@ -25,7 +24,7 @@ describe('[HTML] processHTML', () => {
     expect(title).toEqual('WASM | Static Preview Test')
   })
 
-  it('rewrites leading slash paths to document-relative paths', () => {
+  it('rewrites resource URLs while preserving navigational links', () => {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -42,9 +41,13 @@ describe('[HTML] processHTML', () => {
 
     const { processedHTML } = processHTML(html, HTML_URL)
 
-    expect(processedHTML).toContain('href="assets/main.css"')
-    expect(processedHTML).toContain('content="assets/preview.png"')
+    expect(processedHTML).toContain(
+      'href="https://example.invalid/example-site/main/assets/main.css"',
+    )
+    expect(processedHTML).toContain('content="/assets/preview.png"')
     expect(processedHTML).toContain('href="index.html"')
-    expect(processedHTML).toContain('src="assets/wasm.js"')
+    expect(processedHTML).toContain(
+      'data-preview-script-src="https://example.invalid/example-site/main/assets/wasm.js"',
+    )
   })
 })
