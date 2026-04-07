@@ -7,7 +7,7 @@ export function isHTML(maybeHTML: string): boolean {
 function getFetchResolverScript() {
   return `<script data-static-preview-fetch-resolver>
 ;(() => {
-  const proxyPrefix = 'https://api.codetabs.com/v1/proxy/?quest='
+  const proxyPath = '/api/proxy'
   const nativeFetch = window.fetch.bind(window)
 
   const shouldProxy = (url) => {
@@ -15,7 +15,7 @@ function getFetchResolverScript() {
       return false
     }
 
-    if (url.href.startsWith(proxyPrefix)) {
+    if (url.origin === window.location.origin && url.pathname === proxyPath) {
       return false
     }
 
@@ -35,7 +35,7 @@ function getFetchResolverScript() {
       const absoluteUrl = new URL(requestUrl, document.baseURI)
 
       if (shouldProxy(absoluteUrl)) {
-        const proxiedUrl = \`\${proxyPrefix}\${encodeURIComponent(absoluteUrl.href)}\`
+        const proxiedUrl = \`\${window.location.origin}\${proxyPath}?url=\${encodeURIComponent(absoluteUrl.href)}\`
 
         if (typeof input !== 'string' && !(input instanceof URL)) {
           return nativeFetch(new Request(proxiedUrl, input), init)
