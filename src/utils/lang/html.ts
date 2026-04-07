@@ -9,6 +9,53 @@ export const PREVIEW_SCRIPT_PLACEHOLDER_TYPE =
 export const PREVIEW_SCRIPT_SRC_ATTRIBUTE = 'data-preview-script-src'
 export const PREVIEW_SCRIPT_TYPE_ATTRIBUTE = 'data-preview-script-type'
 
+function getFetchResolverScript() {
+  return `<script data-static-preview-fetch-resolver>
+;(() => {
+  const proxyPrefix = 'https://api.codetabs.com/v1/proxy/?quest='
+  const nativeFetch = window.fetch.bind(window)
+
+  const shouldProxy = (url) => {
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return false
+    }
+
+    if (url.href.startsWith(proxyPrefix)) {
+      return false
+    }
+
+    const baseUrl = new URL(document.baseURI)
+    return url.origin === baseUrl.origin
+  }
+
+  window.fetch = (input, init) => {
+    try {
+      const requestUrl =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url
+
+      const absoluteUrl = new URL(requestUrl, document.baseURI)
+
+      if (shouldProxy(absoluteUrl)) {
+        const proxiedUrl = \`\${proxyPrefix}\${encodeURIComponent(absoluteUrl.href)}\`
+
+        if (typeof input !== 'string' && !(input instanceof URL)) {
+          return nativeFetch(new Request(proxiedUrl, input), init)
+        }
+
+        return nativeFetch(proxiedUrl, init)
+      }
+    } catch {}
+
+    return nativeFetch(input, init)
+  }
+})()
+</script>`
+}
+
 function getTitle(html: string) {
   // TODO: Regex might reasonably be faster here
   const $div = document.createElement('div')
@@ -244,6 +291,10 @@ export function processHTML(html: string, url: string): HTMLPageData {
     const base = doc.createElement('base')
     base.setAttribute('href', url)
     doc.head.prepend(base)
+  }
+
+  if (!doc.head.querySelector('script[data-static-preview-fetch-resolver]')) {
+    doc.head.insertAdjacentHTML('afterbegin', getFetchResolverScript())
   }
 
   rewriteRootRelativeToRepo(doc, pageUrl)
