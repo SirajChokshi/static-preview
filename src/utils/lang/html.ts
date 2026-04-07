@@ -88,7 +88,7 @@ function serializeDoctype(doc: Document): string {
 
 function rewriteRootRelativeAttributes(doc: Document) {
   const rootRelativeAttributes = ['src', 'href'] as const
-  const $assets = doc.querySelectorAll<HTMLElement>('[src], [href], [content]')
+  const $assets = doc.querySelectorAll<HTMLElement>('[src], [href]')
 
   for (const $asset of $assets) {
     for (const attr of rootRelativeAttributes) {
@@ -124,7 +124,7 @@ function isAbsoluteOrSpecialUrl(value: string): boolean {
 
 function rewriteRelativeResourceAttributes(doc: Document, pageUrl: URL) {
   const urlAttributes = ['src', 'href'] as const
-  const $assets = doc.querySelectorAll<HTMLElement>('[src], [href], [content]')
+  const $assets = doc.querySelectorAll<HTMLElement>('[src], [href]')
 
   for (const $asset of $assets) {
     const tagName = $asset.tagName.toLowerCase()
@@ -210,7 +210,7 @@ function rewriteRootRelativeToRepo(doc: Document, rawPageUrl: URL) {
   const repositoryRoot = getRepositoryRoot(rawPageUrl)
 
   const rootRelativeAttributes = ['src', 'href'] as const
-  const $assets = doc.querySelectorAll<HTMLElement>('[src], [href], [content]')
+  const $assets = doc.querySelectorAll<HTMLElement>('[src], [href]')
 
   for (const $asset of $assets) {
     const tagName = $asset.tagName.toLowerCase()
