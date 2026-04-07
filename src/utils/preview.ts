@@ -2,7 +2,14 @@ import { goto } from '$app/navigation'
 import { PreviewError, errorType } from './errors'
 import { proxyFetch } from './fetch'
 import { processCSS } from './lang/css'
-import { isHTML, processHTML, type HTMLPageData } from './lang/html'
+import {
+  isHTML,
+  PREVIEW_SCRIPT_PLACEHOLDER_TYPE,
+  PREVIEW_SCRIPT_SRC_ATTRIBUTE,
+  PREVIEW_SCRIPT_TYPE_ATTRIBUTE,
+  processHTML,
+  type HTMLPageData,
+} from './lang/html'
 import logger from './logger'
 import { processUrl } from './url'
 
@@ -12,6 +19,7 @@ export class Preview {
 
   // Session
   resources: Record<string, string> = {}
+  currentPageUrl: URL | undefined
 
   // TODO - might be worth memoizing against the URL for the session
   pageData: Partial<HTMLPageData> = {}
@@ -85,6 +93,7 @@ export class Preview {
     }
 
     const { processedHTML, title } = processHTML(data, url)
+    this.currentPageUrl = new URL(url)
 
     this.pageData.title = title ?? url
 
@@ -102,15 +111,28 @@ export class Preview {
       this.iframeDocument.document.addEventListener('click', (e) => {
         const $el = e.target as HTMLElement
         const $anchor = $el.closest<HTMLAnchorElement>('a')
+        const href = $anchor?.getAttribute('href')
 
-        if ($anchor) {
-          e.preventDefault()
-
-          // TODO: Check if it's a relative link
-
-          // use Svelte navigation to trigger a re-render from the top of the UI
-          goto(`/${encodeURIComponent($anchor.href)}`)
+        if (!$anchor || !href || href.startsWith('#')) {
+          return
         }
+
+        let resolvedUrl: URL
+        try {
+          resolvedUrl = new URL(href, this.iframeDocument.location.href)
+        } catch {
+          return
+        }
+
+        // Keep external links inside the iframe navigation flow.
+        if (!this.isProxySupportedUrl(resolvedUrl.toString())) {
+          return
+        }
+
+        e.preventDefault()
+
+        // use Svelte navigation to trigger a re-render from the top of the UI
+        goto(`/${encodeURIComponent(resolvedUrl.toString())}`)
       })
     })
   }
@@ -145,36 +167,42 @@ export class Preview {
     })
 
     // Load page JS
+    const scriptSelector = `script[src], script[type="${PREVIEW_SCRIPT_PLACEHOLDER_TYPE}"]`
     const $script =
       this.iframeDocument.document.querySelectorAll<HTMLScriptElement>(
-        'script[src]',
+        scriptSelector,
       )
 
-    const scripts = [...$script]
-      .filter(({ src }) => this.shouldProxyScript(src))
-      .map(async (script) => {
-        const payload = await this.load(script.src)
-        const scriptType = script.getAttribute('type')?.toLowerCase().trim()
+    for (const script of [...$script]) {
+      const source =
+        script.getAttribute(PREVIEW_SCRIPT_SRC_ATTRIBUTE) ?? script.src ?? ''
+      const scriptType =
+        script
+          .getAttribute(PREVIEW_SCRIPT_TYPE_ATTRIBUTE)
+          ?.toLowerCase()
+          .trim() ?? script.getAttribute('type')?.toLowerCase().trim()
+      const type = scriptType === 'module' ? ('module' as const) : undefined
+      const inlinePayload = script.textContent ?? ''
 
-        // Prevent the browser from trying to load unsupported raw URLs directly.
-        script.remove()
+      script.remove()
 
-        return {
-          payload,
-          type: scriptType === 'module' ? ('module' as const) : undefined,
+      if (source) {
+        if (this.shouldProxyScript(source)) {
+          try {
+            const payload = await this.load(source)
+            this.appendScriptToHead(payload, type)
+          } catch (err) {
+            logger.warn(`Skipping script after failed fetch: ${err}`)
+          }
+          continue
         }
-      })
 
-    const scriptResults = await Promise.allSettled(scripts)
-    scriptResults.forEach((result) => {
-      if (result.status !== 'fulfilled') {
-        logger.warn(`Skipping script after failed fetch: ${result.reason}`)
-        return
+        await this.appendExternalScriptToHead(source, type)
+        continue
       }
 
-      const { payload, type } = result.value
-      this.appendScriptToHead(payload, type)
-    })
+      this.appendScriptToHead(inlinePayload, type)
+    }
 
     this.iframeDocument.document.dispatchEvent(
       new Event('DOMContentLoaded', { bubbles: true, cancelable: true }),
@@ -231,6 +259,20 @@ export class Preview {
     }
 
     tag.textContent = data
+    this.iframeDocument.document.head.appendChild(tag)
+  }
+
+  private async appendExternalScriptToHead(
+    src: string,
+    type?: 'module',
+  ): Promise<void> {
+    const tag = this.iframeDocument.document.createElement('script')
+
+    if (type) {
+      tag.type = type
+    }
+
+    tag.src = src
     this.iframeDocument.document.head.appendChild(tag)
   }
 
