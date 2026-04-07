@@ -1,8 +1,10 @@
 jest.mock('$app/navigation', () => ({ goto: jest.fn() }), { virtual: true })
 
+import { goto } from '$app/navigation'
 import { Preview } from '../src/utils/preview'
 
 const originalWarn = console.warn
+const gotoMock = goto as jest.MockedFunction<typeof goto>
 
 function mockResponse(status: number, body: string): Response {
   return {
@@ -39,6 +41,7 @@ describe('[Preview] resource loading resilience', () => {
     document.body.innerHTML = '<iframe id="site-frame"></iframe>'
     originalFetch = global.fetch
     console.warn = jest.fn()
+    gotoMock.mockClear()
   })
 
   afterEach(() => {
@@ -248,6 +251,56 @@ describe('[Preview] resource loading resilience', () => {
 
     resolveFetch?.(mockResponse(200, htmlPayload))
     await expect(renderPromise).resolves.toBeUndefined()
+  })
+
+  it('resolves relative anchor clicks against base URI for in-preview navigation', async () => {
+    const expectedNavigationTarget =
+      'https://raw.githubusercontent.com/example-owner/example-static-site/master/docs/setup.html'
+    const htmlPayload = `
+      <!doctype html>
+      <html>
+        <head>
+          <title>Demo Site</title>
+        </head>
+        <body>
+          <a id="relative-nav" href="docs/setup.html">Setup Guide</a>
+        </body>
+      </html>
+    `
+
+    const fetchMock = jest.fn(async (input: string | URL | Request) => {
+      const target = getProxyTarget(input)
+
+      if (target === htmlUrl) {
+        return mockResponse(200, htmlPayload)
+      }
+
+      throw new Error(`Unexpected proxy target requested: ${target}`)
+    })
+
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    const preview = new Preview('#site-frame')
+    await expect(preview.render(htmlUrl)).resolves.toBeUndefined()
+
+    const iframe = document.querySelector<HTMLIFrameElement>('#site-frame')
+    expect(iframe).toBeTruthy()
+    iframe?.dispatchEvent(new Event('load'))
+
+    const relativeLink =
+      iframe?.contentDocument?.querySelector<HTMLAnchorElement>('#relative-nav')
+    expect(relativeLink).toBeTruthy()
+
+    const clickEvent = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+    })
+    const clickHandled = relativeLink?.dispatchEvent(clickEvent)
+
+    expect(clickHandled).toBe(false)
+    expect(gotoMock).toHaveBeenCalledWith(
+      `/${encodeURIComponent(expectedNavigationTarget)}`,
+    )
   })
 
   it('rewrites root-relative and hash links to remain in the proxied repo', async () => {

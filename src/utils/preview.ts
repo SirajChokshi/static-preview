@@ -117,7 +117,10 @@ export class Preview {
 
         let resolvedUrl: URL
         try {
-          resolvedUrl = new URL(href, this.iframeDocument.location.href)
+          const resolutionBase =
+            this.iframeDocument.document.baseURI ||
+            this.iframeDocument.location.href
+          resolvedUrl = new URL(href, resolutionBase)
         } catch {
           return
         }
