@@ -31,9 +31,9 @@ describe('[Preview] resource loading resilience', () => {
   let originalFetch: typeof fetch | undefined
 
   const htmlUrl =
-    'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/index.html'
+    'https://raw.githubusercontent.com/example-owner/example-static-site/master/index.html'
   const proxiedCssUrl =
-    'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/styles/site.css'
+    'https://raw.githubusercontent.com/example-owner/example-static-site/master/styles/site.css'
 
   beforeEach(() => {
     document.body.innerHTML = '<iframe id="site-frame"></iframe>'
@@ -51,8 +51,8 @@ describe('[Preview] resource loading resilience', () => {
       <!doctype html>
       <html>
         <head>
-          <title>OpenEmu</title>
-          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;400;700&display=swap" />
+          <title>Demo Site</title>
+          <link rel="stylesheet" href="https://cdn.invalid/css/demo.css" />
           <link rel="stylesheet" href="styles/site.css" />
         </head>
         <body><h1>Site</h1></body>
@@ -84,22 +84,20 @@ describe('[Preview] resource loading resilience', () => {
 
     expect(requestedTargets).toContain(htmlUrl)
     expect(
-      requestedTargets.some((target) =>
-        target.includes('fonts.googleapis.com'),
-      ),
+      requestedTargets.some((target) => target.includes('cdn.invalid')),
     ).toBe(false)
     expect(requestedTargets).toContain(proxiedCssUrl)
   })
 
   it('continues rendering when a proxied stylesheet fetch fails', async () => {
     const failingCssUrl =
-      'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/styles/failing.css'
+      'https://raw.githubusercontent.com/example-owner/example-static-site/master/styles/failing.css'
 
     const htmlPayload = `
       <!doctype html>
       <html>
         <head>
-          <title>OpenEmu</title>
+          <title>Demo Site</title>
           <link rel="stylesheet" href="styles/failing.css" />
         </head>
         <body><h1>Site</h1></body>
@@ -131,7 +129,7 @@ describe('[Preview] resource loading resilience', () => {
       <!doctype html>
       <html>
         <head>
-          <title>Delayed OpenEmu</title>
+          <title>Delayed Demo Site</title>
         </head>
         <body><h1>Site</h1></body>
       </html>
@@ -174,7 +172,7 @@ describe('[Preview] resource loading resilience', () => {
       <!doctype html>
       <html>
         <head>
-          <title>OpenEmu</title>
+          <title>Demo Site</title>
         </head>
         <body>
           <a id="root-link" href="/files/press-pack-v2.zip">Press Pack</a>
@@ -214,15 +212,15 @@ describe('[Preview] resource loading resilience', () => {
 
   it('rewrites media and stylesheet URLs to absolute raw repo URLs', async () => {
     const expectedImageUrl =
-      'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/img/logo.png'
+      'https://raw.githubusercontent.com/example-owner/example-static-site/master/img/logo.png'
     const expectedStylesheetUrl =
-      'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/styles/site.css'
+      'https://raw.githubusercontent.com/example-owner/example-static-site/master/styles/site.css'
 
     const htmlPayload = `
       <!doctype html>
       <html>
         <head>
-          <title>OpenEmu</title>
+          <title>Demo Site</title>
           <link id="repo-css" rel="stylesheet" href="styles/site.css" />
         </head>
         <body>
@@ -263,13 +261,13 @@ describe('[Preview] resource loading resilience', () => {
 
   it('executes deferred scripts in order', async () => {
     const libraryScriptUrl =
-      'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/js/lib.js'
+      'https://raw.githubusercontent.com/example-owner/example-static-site/master/js/lib.js'
 
     const htmlPayload = `
       <!doctype html>
       <html>
         <head>
-          <title>OpenEmu</title>
+          <title>Demo Site</title>
           <script src="./js/lib.js"></script>
           <script>
             document.body.setAttribute(
@@ -308,13 +306,13 @@ describe('[Preview] resource loading resilience', () => {
 
   it('preserves script order for proxied and inline scripts', async () => {
     const proxiedScriptUrl =
-      'https://raw.githubusercontent.com/OpenEmu/openemu.github.io/master/js/a.js'
+      'https://raw.githubusercontent.com/example-owner/example-static-site/master/js/a.js'
 
     const htmlPayload = `
       <!doctype html>
       <html>
         <head>
-          <title>OpenEmu</title>
+          <title>Demo Site</title>
           <script src="./js/a.js"></script>
           <script>
             document.body.setAttribute('data-inline-order', window.__scriptOrder || 'missing')
