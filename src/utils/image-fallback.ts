@@ -1,28 +1,6 @@
 import { resourceType } from '../types/resources'
+import { getRepositoryRoot } from './lang/html'
 import { getResourceType, isValidURL, processUrl } from './url'
-
-function getRepositoryRoot(rawHtmlUrl: URL): string | undefined {
-  const segments = rawHtmlUrl.pathname.split('/').filter(Boolean)
-
-  if (
-    rawHtmlUrl.hostname === 'raw.githubusercontent.com' &&
-    segments.length >= 3
-  ) {
-    const [owner, repo, branch] = segments
-    return `https://${rawHtmlUrl.hostname}/${owner}/${repo}/${branch}/`
-  }
-
-  const rawMarker = segments.findIndex(
-    (segment, idx) => segment === '-' && segments[idx + 1] === 'raw',
-  )
-  if (rawHtmlUrl.hostname === 'gitlab.com' && rawMarker >= 2) {
-    return `https://${rawHtmlUrl.hostname}/${segments
-      .slice(0, rawMarker + 3)
-      .join('/')}/`
-  }
-
-  return undefined
-}
 
 export function sanitizeRelativePath(
   pathParam: string | undefined,

@@ -126,7 +126,7 @@ function normalizePathname(pathname: string): string {
   return `/${normalized.join('/')}`
 }
 
-function getRepositoryRoot(url: URL): string {
+export function getRepositoryRoot(url: URL): string {
   const pathname = normalizePathname(url.pathname)
   const segments = pathname.split('/').filter(Boolean)
 

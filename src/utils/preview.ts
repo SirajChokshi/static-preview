@@ -19,7 +19,6 @@ export class Preview {
 
   // Session
   resources: Record<string, string> = {}
-  currentPageUrl: URL | undefined
 
   // TODO - might be worth memoizing against the URL for the session
   pageData: Partial<HTMLPageData> = {}
@@ -93,7 +92,6 @@ export class Preview {
     }
 
     const { processedHTML, title } = processHTML(data, url)
-    this.currentPageUrl = new URL(url)
 
     this.pageData.title = title ?? url
 
@@ -262,18 +260,22 @@ export class Preview {
     this.iframeDocument.document.head.appendChild(tag)
   }
 
-  private async appendExternalScriptToHead(
+  private appendExternalScriptToHead(
     src: string,
     type?: 'module',
   ): Promise<void> {
-    const tag = this.iframeDocument.document.createElement('script')
+    return new Promise<void>((resolve, reject) => {
+      const tag = this.iframeDocument.document.createElement('script')
 
-    if (type) {
-      tag.type = type
-    }
+      if (type) {
+        tag.type = type
+      }
 
-    tag.src = src
-    this.iframeDocument.document.head.appendChild(tag)
+      tag.onload = () => resolve()
+      tag.onerror = () => reject(new Error(`Failed to load script: ${src}`))
+      tag.src = src
+      this.iframeDocument.document.head.appendChild(tag)
+    })
   }
 
   /**
