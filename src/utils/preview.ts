@@ -175,11 +175,12 @@ export class Preview {
       const source =
         script.getAttribute(PREVIEW_SCRIPT_SRC_ATTRIBUTE) ?? script.src ?? ''
       const scriptType =
-        script
-          .getAttribute(PREVIEW_SCRIPT_TYPE_ATTRIBUTE)
-          ?.toLowerCase()
-          .trim() ?? script.getAttribute('type')?.toLowerCase().trim()
-      const type = scriptType === 'module' ? ('module' as const) : undefined
+        script.getAttribute(PREVIEW_SCRIPT_TYPE_ATTRIBUTE)?.trim() ??
+        script.getAttribute('type')?.trim()
+      const type =
+        scriptType && scriptType !== PREVIEW_SCRIPT_PLACEHOLDER_TYPE
+          ? scriptType
+          : undefined
       const inlinePayload = script.textContent ?? ''
 
       script.remove()
@@ -249,7 +250,7 @@ export class Preview {
   /**
    * Inline JS into the preview head.
    */
-  private appendScriptToHead(data: string, type?: 'module'): void {
+  private appendScriptToHead(data: string, type?: string): void {
     if (!data) {
       return
     }
@@ -266,7 +267,7 @@ export class Preview {
 
   private appendExternalScriptToHead(
     src: string,
-    type?: 'module',
+    type?: string,
   ): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const tag = this.iframeDocument.document.createElement('script')

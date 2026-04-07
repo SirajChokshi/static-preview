@@ -154,7 +154,7 @@ describe('[Preview] resource loading resilience', () => {
         preview as unknown as {
           appendExternalScriptToHead: (
             src: string,
-            type?: 'module',
+            type?: string,
           ) => Promise<void>
         },
         'appendExternalScriptToHead',
@@ -167,6 +167,44 @@ describe('[Preview] resource loading resilience', () => {
       'https://cdn.invalid/app.js',
       undefined,
     )
+  })
+
+  it('preserves non-module script types during deferred replay', async () => {
+    const htmlPayload = `
+      <!doctype html>
+      <html>
+        <head>
+          <title>Demo Site</title>
+          <script type="application/ld+json">
+            {"@context":"https://schema.org","name":"Demo"}
+          </script>
+        </head>
+        <body><h1>Site</h1></body>
+      </html>
+    `
+
+    const fetchMock = jest.fn(async (input: string | URL | Request) => {
+      const target = getProxyTarget(input)
+
+      if (target === htmlUrl) {
+        return mockResponse(200, htmlPayload)
+      }
+
+      throw new Error(`Unexpected proxy target requested: ${target}`)
+    })
+
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    const preview = new Preview('#site-frame')
+    await expect(preview.render(htmlUrl)).resolves.toBeUndefined()
+
+    const doc =
+      document.querySelector<HTMLIFrameElement>('#site-frame')?.contentDocument
+    const scriptTypes = [...(doc?.querySelectorAll('script') ?? [])].map(
+      (script) => script.getAttribute('type'),
+    )
+
+    expect(scriptTypes).toContain('application/ld+json')
   })
 
   it('awaits single-url rendering before resolving', async () => {
