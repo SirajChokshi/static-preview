@@ -124,6 +124,51 @@ describe('[Preview] resource loading resilience', () => {
     await expect(preview.render(htmlUrl)).resolves.toBeUndefined()
   })
 
+  it('continues rendering when a non-proxied external script fails', async () => {
+    const htmlPayload = `
+      <!doctype html>
+      <html>
+        <head>
+          <title>Demo Site</title>
+          <script src="https://cdn.invalid/app.js"></script>
+        </head>
+        <body><h1>Site</h1></body>
+      </html>
+    `
+
+    const fetchMock = jest.fn(async (input: string | URL | Request) => {
+      const target = getProxyTarget(input)
+
+      if (target === htmlUrl) {
+        return mockResponse(200, htmlPayload)
+      }
+
+      throw new Error(`Unexpected proxy target requested: ${target}`)
+    })
+
+    global.fetch = fetchMock as unknown as typeof fetch
+
+    const preview = new Preview('#site-frame')
+    const externalScriptSpy = jest
+      .spyOn(
+        preview as unknown as {
+          appendExternalScriptToHead: (
+            src: string,
+            type?: 'module',
+          ) => Promise<void>
+        },
+        'appendExternalScriptToHead',
+      )
+      .mockRejectedValue(new Error('external script load failure'))
+
+    await expect(preview.render(htmlUrl)).resolves.toBeUndefined()
+
+    expect(externalScriptSpy).toHaveBeenCalledWith(
+      'https://cdn.invalid/app.js',
+      undefined,
+    )
+  })
+
   it('awaits single-url rendering before resolving', async () => {
     const htmlPayload = `
       <!doctype html>

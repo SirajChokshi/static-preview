@@ -195,7 +195,11 @@ export class Preview {
           continue
         }
 
-        await this.appendExternalScriptToHead(source, type)
+        try {
+          await this.appendExternalScriptToHead(source, type)
+        } catch (err) {
+          logger.warn(`Skipping script after failed external load: ${err}`)
+        }
         continue
       }
 
